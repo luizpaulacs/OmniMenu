@@ -8,11 +8,11 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     
     <style>
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background-color: #0f172a; color: #cbd5e1; display: none; } /* Oculto por padrão até validar a senha */
-        h1, h2 { color: #f8fafc; }
-        .container { max-width: 1100px; margin: 0 auto; }
-        .grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-top: 20px; }
-        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background-color: #0f172a; color: #cbd5e1; display: none; }
+        h1, h2 { color: #f8fafc; margin-top: 0; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .grid { display: grid; grid-template-columns: 1fr 2.5fr; gap: 20px; margin-top: 20px; }
+        @media (max-width: 992px) { .grid { grid-template-columns: 1fr; } }
         
         .card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         .campo { margin-bottom: 15px; }
@@ -24,11 +24,17 @@
         
         table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #1e293b; }
         th { background: #334155; color: #22c55e; text-align: left; padding: 12px; font-size: 14px; }
-        td { padding: 12px; border-bottom: 1px solid #334155; font-size: 15px; }
+        td { padding: 12px; border-bottom: 1px solid #334155; font-size: 14px; vertical-align: top; }
         
-        .status-badge-ativo { background: #16a34a; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-        .status-badge-bloqueado { background: #dc2626; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-        .action-btn { border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; margin-right: 5px; }
+        /* Estilos dos Links Gerados */
+        .link-box { background: #0f172a; border: 1px solid #334155; padding: 6px 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; margin-top: 5px; max-width: 450px; }
+        .link-text { color: #38bdf8; font-family: monospace; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 350px; }
+        .btn-copiar { background: #475569; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; }
+        .btn-copiar:hover { background: #64748b; }
+        
+        .status-badge-ativo { background: #16a34a; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block; }
+        .status-badge-bloqueado { background: #dc2626; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block; }
+        .action-btn { border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; margin-top: 5px; width: 100%; display: block; text-align: center; }
         .btn-bloquear { background: #ef4444; color: white; }
         .btn-ativar { background: #22c55e; color: black; }
     </style>
@@ -38,16 +44,16 @@
     <div class="container">
         <header style="border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 20px;">
             <h1>🛡️ Painel Master SaaS — Akagai Pora</h1>
-            <p style="color: #94a3b8; margin: 0;">Controle Global de Licenças e Ativações do OmniMenu</p>
+            <p style="color: #94a3b8; margin: 0;">Controle Global de Licenças e Links Gerados</p>
         </header>
 
         <div class="grid">
-            <div class="card">
+            <div class="card" style="height: fit-content;">
                 <h2>🏢 Nova Empresa</h2>
                 <form id="form-empresa" onsubmit="criarEmpresa(event)">
                     <div class="campo">
                         <label>ID Único da URL (ex: lanchesartesanal):</label>
-                        <input type="text" id="emp-id" placeholder="Apenas letras, sem espaços" required>
+                        <input type="text" id="emp-id" placeholder="Apenas letras minusculas, sem espaços" required>
                     </div>
                     <div class="campo">
                         <label>Nome da Lanchonete / Empresa:</label>
@@ -70,10 +76,10 @@
                 <table id="tabela-lojistas">
                     <thead>
                         <tr>
-                            <th>Empresa (ID)</th>
+                            <th style="width: 50%;">Empresa e URLs de Acesso</th>
                             <th>WhatsApp</th>
                             <th>Status</th>
-                            <th>Ações de Licença</th>
+                            <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody id="lista-lojistas-master">
@@ -88,27 +94,31 @@
         // =============================================================
         // TRAVA DE SEGURANÇA POR SENHA MESTRA
         // =============================================================
-        const SENHA_MESTRA = "akagai1741"; // 🌟
+        const SENHA_MESTRA = "akagai1741"; // 🌟 COLOQUE SUA SENHA DO PAINEL AQUI
         
         const tentativaSenha = prompt("Acesso Restrito - Akagai Pora.\nDigite a senha master do OmniMenu:");
         
         if (tentativaSenha === SENHA_MESTRA) {
-            // Se acertar a senha, o CSS muda e revela o painel na tela
             document.body.style.display = "block";
         } else {
             alert("❌ Senha incorreta! Acesso negado.");
-            window.location.href = "https://github.com"; // Chuta o invasor para outro site
+            window.location.href = "https://github.com";
             throw new Error("Acesso bloqueado por senha inválida.");
         }
 
-        // CONFIGURAÇÃO DO SEU FIREBASE (Insira suas chaves aqui)
+        // =============================================================
+        // LINK BASE DO SEU GITHUB PAGES
+        // =============================================================
+        const URL_BASE_GITHUB = "https://luizpaulacs.github.io/OmniMenu/";
+
+        // CONFIGURAÇÃO DO SEU FIREBASE
         const firebaseConfig = {
-            apiKey: "AIzaSyAC3ep1kk4zxKkVH1jXHqWV9r2use_HWfo",
-            authDomain: "omnimenu-d2875.firebaseapp.com",
-            projectId: "omnimenu-d2875",
-            storageBucket: "omnimenu-d2875.firebasestorage.app",
-            messagingSenderId: "628204265903",
-            appId: "1:628204265903:web:379db009ca38289bd6cf5a"
+            apiKey: "SUA_API_KEY",
+            authDomain: "SEU_AUTH_DOMAIN",
+            projectId: "SEU_PROJECT_ID",
+            storageBucket: "SEU_STORAGE_BUCKET",
+            messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+            appId: "SEU_APP_ID"
         };
 
         firebase.initializeApp(firebaseConfig);
@@ -135,6 +145,7 @@
             .catch(error => alert("Erro ao criar empresa: " + error.message));
         }
 
+        // ESCUTA E GERA OS LINKS DINAMICAMENTE NA TABELA
         db.collection("empresas").onSnapshot((snapshot) => {
             const tbody = document.getElementById("lista-lojistas-master");
             tbody.innerHTML = "";
@@ -148,17 +159,39 @@
                 const empresa = doc.data();
                 const id = doc.id;
                 
+                // Monta os links completos automaticamente com base no ID
+                const linkCliente = `${URL_BASE_GITHUB}index.html?loja=${id}`;
+                const linkAdmin = `${URL_BASE_GITHUB}admin.html?loja=${id}`;
+
                 const badgeStatus = empresa.status === "Ativo" 
                     ? `<span class="status-badge-ativo">Ativo</span>` 
                     : `<span class="status-badge-bloqueado">Inadimplente</span>`;
 
                 const botaoAcao = empresa.status === "Ativo"
                     ? `<button class="action-btn btn-bloquear" onclick="alterarStatusLicenca('${id}', 'Bloqueado')">🚫 Bloquear</button>`
-                    : `<button class="action-btn btn-ativar" onclick="alterarStatusLicenca('${id}', 'Ativo')">✅ Ativar / Pago</button>`;
+                    : `<button class="action-btn btn-ativar" onclick="alterarStatusLicenca('${id}', 'Ativo')">✅ Reativar</button>`;
 
                 tbody.innerHTML += `
                     <tr>
-                        <td><strong>${empresa.nomeNegocio}</strong><br><small style="color:#64748b;">?loja=${id}</small></td>
+                        <td>
+                            <strong style="font-size: 16px; color: #fff;">${empresa.nomeNegocio}</strong> <small style="color:#64748b;">(${id})</small>
+                            
+                            <div style="margin-top: 10px;">
+                                <span style="font-size: 11px; color: #94a3b8; font-weight: bold;">📱 CARDÁPIO DO CLIENTE:</span>
+                                <div class="link-box">
+                                    <span class="link-text" id="url-cli-${id}">${linkCliente}</span>
+                                    <button class="btn-copiar" onclick="copiarTexto('${linkCliente}')">Copiar</button>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 8px;">
+                                <span style="font-size: 11px; color: #94a3b8; font-weight: bold;">⚙️ PAINEL DO LOJISTA (ADMIN):</span>
+                                <div class="link-box">
+                                    <span class="link-text" id="url-adm-${id}">${linkAdmin}</span>
+                                    <button class="btn-copiar" onclick="copiarTexto('${linkAdmin}')">Copiar</button>
+                                </div>
+                            </div>
+                        </td>
                         <td>${empresa.whatsapp}</td>
                         <td>${badgeStatus}</td>
                         <td>${botaoAcao}</td>
@@ -167,10 +200,19 @@
             });
         });
 
+        // FUNÇÃO AUXILIAR PARA COPIAR O LINK COM UM CLIQUE
+        function copiarTexto(texto) {
+            navigator.clipboard.writeText(texto).then(() => {
+                alert("Link copiado para a área de transferência!");
+            }).catch(err => {
+                alert("Erro ao copiar o link, faça manualmente.");
+            });
+        }
+
         function alterarStatusLicenca(idEmpresa, novoStatus) {
             const msgConfirmacao = novoStatus === "Bloqueado" 
-                ? "Tem certeza que deseja BLOQUEAR o acesso deste cliente por falta de pagamento?" 
-                : "Confirmar ativação/pagamento da mensalidade deste cliente?";
+                ? "Tem certeza que deseja BLOQUEAR o acesso deste cliente?" 
+                : "Confirmar ativação/pagamento deste cliente?";
                 
             if(confirm(msgConfirmacao)) {
                 db.collection("empresas").doc(idEmpresa).update({
