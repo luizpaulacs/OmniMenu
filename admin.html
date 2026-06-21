@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - OmniMenu</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+    
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background-color: #f1f2f6; color: #2f3542; }
+        h1, h2 { color: #1e272e; margin-top: 0; }
+        .main-container { max-width: 1000px; margin: 0 auto; }
+        
+        .abas-menu { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ced6e0; padding-bottom: 10px; }
+        .aba-btn { background: #ced6e0; border: none; padding: 10px 20px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; color: #57606f; transition: 0.2s; }
+        .aba-btn.ativa { background: #e74c3c; color: white; }
+        
+        .aba-conteudo { display: none; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .aba-conteudo.ativa { display: block; }
+        
+        .filtros-container { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+        .filtro-btn { background: white; border: 1px solid #ccc; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 14px; }
+        .filtro-btn.ativo { background: #2f3542; color: white; border-color: #2f3542; }
+
+        .campo { margin-bottom: 15px; }
+        .campo label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .campo input, .campo textarea, .campo select { width: 100%; padding: 10px; border: 1px solid #ced6e0; border-radius: 6px; box-sizing: border-box; }
+        .btn-salvar { background: #2ecc71; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; width: 100%; }
+        .btn-salvar:disabled { background: #a4b0be; cursor: not-allowed; }
+        
+        .pedido-card { border-left: 6px solid #f1c40f; padding: 15px; background: #f8f9fa; border-radius: 6px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .pedido-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 10px; }
+        .pedido-itens { font-size: 14px; color: #57606f; margin-bottom: 10px; border-top: 1px dashed #ddd; border-bottom: 1px dashed #ddd; padding: 8px 0; }
+        .select-status { padding: 6px; border-radius: 4px; border: 1px solid #ccc; background: white; font-weight: bold; }
+        
+        div[class*="status-Pendente"] { border-left-color: #f1c40f; }
+        div[class*="status-Em preparo"] { border-left-color: #3498db; }
+        div[class*="status-Em entrega"] { border-left-color: #e67e22; }
+        div[class*="status-Concluido"] { border-left-color: #2ecc71; opacity: 0.7; }
+
+        .resumo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px; }
+        .resumo-card { background: #f8f9fa; border: 1px solid #e1e2e6; border-radius: 8px; padding: 20px; text-align: center; }
+        .resumo-card h3 { margin: 0; font-size: 14px; color: #7f8c8d; text-transform: uppercase; }
+        .resumo-card p { margin: 10px 0 0 0; font-size: 28px; font-weight: bold; color: #2f3542; }
+    </style>
+</head>
+<body>
+
+    <div class="main-container" id="conteudo-painel-admin">
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h1 style="margin: 0;">⚙️ Painel OmniMenu — <span id="txt-nome-loja">Carregando...</span></h1>
+        </header>
+
+        <div class="abas-menu">
+            <button class="aba-btn ativa" onclick="mudarAba('aba-pedidos', this)">📥 Pedidos Recebidos</button>
+            <button class="aba-btn" onclick="mudarAba('aba-resumo', this)">📊 Resumo do Dia</button>
+            <button class="aba-btn" onclick="mudarAba('aba-cadastro', this)">➕ Cadastrar Produto</button>
+        </div>
+
+        <div id="aba-pedidos" class="aba-conteudo ativa">
+            <h2>Pedidos em Tempo Real</h2>
+            <div class="filtros-container">
+                <button class="filtro-btn ativo" onclick="filtrarPedidos('Todos', this)">Todos</button>
+                <button class="filtro-btn" onclick="filtrarPedidos('Pendente', this)">⏳ Pendentes</button>
+                <button class="filtro-btn" onclick="filtrarPedidos('Em preparo', this)">👨‍🍳 Na Cozinha</button>
+                <button class="filtro-btn" onclick="filtrarPedidos('Em entrega', this)">🛵 Em rota / Balcão</button>
+                <button class="filtro-btn" onclick="filtrarPedidos('Concluido', this)">✅ Concluídos</button>
+            </div>
+            <div id="lista-pedidos-admin">Carregando painel de pedidos...</div>
+        </div>
+
+        <div id="aba-resumo" class="aba-conteudo">
+            <h2>Estatísticas de Hoje</h2>
+            <div class="resumo-grid">
+                <div class="resumo-card" style="border-top: 4px solid #2ecc71;">
+                    <h3>💵 Faturamento Hoje</h3>
+                    <p id="resumo-faturamento">R$ 0,00</p>
+                </div>
+                <div class="resumo-card" style="border-top: 4px solid #3498db;">
+                    <h3>📦 Total Pedidos</h3>
+                    <p id="resumo-total-pedidos">0</p>
+                </div>
+                <div class="resumo-card" style="border-top: 4px solid #e67e22;">
+                    <h3>🛵 Delivery / Mesa</h3>
+                    <p id="resumo-canais">D: 0 | M: 0</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="aba-cadastro" class="aba-conteudo">
+            <h2>Cadastrar Novo Item no Cardápio</h2>
+            <form id="form-produto" onsubmit="cadastrarProduto(event)">
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
+                    <div class="campo">
+                        <label>Nome do Produto:</label>
+                        <input type="text" id="prod-nome" placeholder="Ex: Pizza Frango c/ Catupiry" required>
+                    </div>
+                    <div class="campo">
+                        <label>Preço (R$):</label>
+                        <input type="number" id="prod-preco" step="0.01" placeholder="Ex: 49.90" required>
+                    </div>
+                </div>
+                <div class="campo">
+                    <label>Descrição / Ingredientes:</label>
+                    <textarea id="prod-desc" rows="3" placeholder="Ingredientes..." required></textarea>
+                </div>
+                <div class="campo">
+                    <label>Imagem do Produto:</label>
+                    <input type="file" id="prod-img" accept="image/*" required>
+                </div>
+                <button type="submit" id="btn-submit-admin" class="btn-salvar">🚀 Salvar Produto no Cardápio</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAC3ep1kk4zxKkVH1jXHqWV9r2use_HWfo",
+            authDomain: "omnimenu-d2875.firebaseapp.com",
+            projectId: "omnimenu-d2875",
+            storageBucket: "omnimenu-d2875.firebasestorage.app",
+            messagingSenderId: "628204265903",
+            appId: "1:628204265903:web:379db009ca38289bd6cf5a"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const idLojaAtual = urlParams.get('loja');
+
+        let todosPedidosLocais = []; 
+        let filtroAtual = "Todos";
+
+        if (!idLojaAtual) {
+            document.getElementById("conteudo-painel-admin").innerHTML = "<h2>⚠️ Link Admin incompleto. Identificador ?loja= ausente.</h2>";
+            throw new Error("ID ausente.");
+        }
+
+        // VERIFICA SE A LOJA EXISTE E SE ESTÁ ATIVA PARA PODER CONCEDER ACESSO AO PAINEL
+        db.collection("empresas").doc(idLojaAtual).get().then((doc) => {
+            if (doc.exists) {
+                const dadosLoja = doc.data();
+                
+                if (dadosLoja.status === "Bloqueado") {
+                    document.getElementById("conteudo-painel-admin").innerHTML = `
+                        <div style="text-align:center; padding:40px; color:#ef4444;">
+                            <h2>🚫 Acesso ao Painel Suspenso</h2>
+                            <p style="color:#7f8c8d;">Sua licença OmniMenu está bloqueada por pendências financeiras. Contate a Akagai Pora.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                document.getElementById("txt-nome-loja").innerText = dadosLoja.nomeNegocio;
+                inicializarEscutadores();
+            } else {
+                document.getElementById("conteudo-painel-admin").innerHTML = "<h2>🏪 Estabelecimento inexistente.</h2>";
+            }
+        });
+
+        function inicializarEscutadores() {
+            db.collection("empresas").doc(idLojaAtual).collection("pedidos").orderBy("dataCriacao", "desc").onSnapshot((snapshot) => {
+                todosPedidosLocais = [];
+                snapshot.forEach(doc => {
+                    const p = doc.data();
+                    p.id = doc.id;
+                    todosPedidosLocais.push(p);
+                });
+                renderizarPedidos();
+                calcularResumoDoDia();
+            });
+        }
+
+        function mudarAba(idAba, botao) {
+            document.querySelectorAll('.aba-conteudo').forEach(aba => aba.classList.remove('ativa'));
+            document.querySelectorAll('.aba-btn').forEach(btn => btn.classList.remove('ativa'));
+            document.getElementById(idAba).classList.add('ativa');
+            botao.classList.add('ativa');
+        }
+
+        function cadastrarProduto(event) {
+            event.preventDefault();
+            const btn = document.getElementById('btn-submit-admin');
+            const arquivo = document.getElementById('prod-img').files[0];
+            const nome = document.getElementById('prod-nome').value;
+            const desc = document.getElementById('prod-desc').value;
+            const preco = parseFloat(document.getElementById('prod-preco').value);
+
+            btn.innerText = "⏳ Enviando imagem...";
+            btn.disabled = true;
+
+            const nomeArquivo = Date.now() + "_" + arquivo.name;
+            const refStorage = storage.ref().child('produtos/' + nomeArquivo);
+
+            refStorage.put(arquivo)
+                .then((snapshot) => snapshot.ref.getDownloadURL())
+                .then((urlImagem) => {
+                    return db.collection("empresas").doc(idLojaAtual).collection("produtos").add({
+                        nome: nome,
+                        desc: desc,
+                        preco: preco,
+                        imagemUrl: urlImagem,
+                        dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                })
+                .then(() => {
+                    alert("Produto salvo!");
+                    document.getElementById('form-produto').reset();
+                })
+                .catch((error) => alert("Erro: " + error.message))
+                .finally(() => {
+                    btn.innerText = "🚀 Salvar Produto no Cardápio";
+                    btn.disabled = false;
+                });
+        }
+
+        function filtrarPedidos(status, botao) {
+            filtroAtual = status;
+            document.querySelectorAll('.filtro-btn').forEach(btn => btn.classList.remove('ativo'));
+            botao.classList.add('ativo');
+            renderizarPedidos();
+        }
+
+        function renderizarPedidos() {
+            const container = document.getElementById("lista-pedidos-admin");
+            container.innerHTML = "";
+
+            const pedidosFiltrados = todosPedidosLocais.filter(p => {
+                if (filtroAtual === "Todos") return true;
+                return p.status === filtroAtual;
+            });
+
+            if (pedidosFiltrados.length === 0) {
+                container.innerHTML = `<p style="color:#7f8c8d;">Nenhum pedido encontrado.</p>`;
+                return;
+            }
+
+            pedidosFiltrados.forEach((pedido) => {
+                let itensHTML = "";
+                pedido.itens.forEach(item => { itensHTML += `<div>• ${item.quantidade}x ${item.nome}</div>`; });
+
+                container.innerHTML += `
+                    <div class="pedido-card status-${pedido.status}">
+                        <div class="pedido-header">
+                            <span>👤 ${pedido.clienteNome} (${pedido.tipoAtendimento})</span>
+                            <span style="color: #2ecc71">Total: R$ ${pedido.total.toFixed(2)}</span>
+                        </div>
+                        <div style="font-size: 13px; color: #7f8c8d; margin-bottom: 8px;">📍 Localização: ${pedido.localizacao}</div>
+                        <div class="pedido-itens">${itensHTML}</div>
+                        <div style="text-align: right;">
+                            <label style="font-size: 12px; font-weight:bold; margin-right: 5px;">Mudar Status:</label>
+                            <select class="select-status" onchange="actualizarStatusPedido('${pedido.id}', this.value)">
+                                <option value="Pendente" ${pedido.status === 'Pendente' ? 'selected' : ''}>⏳ Pendente</option>
+                                <option value="Em preparo" ${pedido.status === 'Em preparo' ? 'selected' : ''}>👨‍🍳 Em preparo</option>
+                                <option value="Em entrega" ${pedido.status === 'Em entrega' ? 'selected' : ''}>🛵 Em entrega</option>
+                                <option value="Concluido" ${pedido.status === 'Concluido' ? 'selected' : ''}>✅ Concluido</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function calcularResumoDoDia() {
+            let faturamento = 0, delivery = 0, mesa = 0;
+            todosPedidosLocais.forEach(p => {
+                faturamento += p.total;
+                if(p.tipoAtendimento === "Entrega") delivery++;
+                if(p.tipoAtendimento === "Mesa") mesa++;
+            });
+            document.getElementById("resumo-faturamento").innerText = `R$ ${faturamento.toFixed(2)}`;
+            document.getElementById("resumo-total-pedidos").innerText = todosPedidosLocais.length;
+            document.getElementById("resumo-canais").innerText = `🛵 ${delivery} | 🍽️ ${mesa}`;
+        }
+
+        function actualizarStatusPedido(id, novoStatus) {
+            db.collection("empresas").doc(idLojaAtual).collection("pedidos").doc(id).update({ status: novoStatus });
+        }
+    </script>
+</body>
+</html>

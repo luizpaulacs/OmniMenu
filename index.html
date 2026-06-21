@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniMenu by Akagai Pora</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; background-color: #f5f6fa; }
+        header { color: white; text-align: center; padding: 20px; font-size: 24px; font-weight: bold; }
+        .container { max-width: 500px; margin: 0 auto; padding: 15px; padding-bottom: 120px; }
+        
+        .produto-card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
+        .produto-img { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; margin-right: 15px; background-color: #eee; flex-shrink: 0; }
+        .produto-info h3 { margin: 0 0 5px 0; font-size: 18px; }
+        .produto-info p { margin: 0; color: #7f8c8d; font-size: 14px; }
+        .produto-preco { font-weight: bold; color: #2ecc71; margin-top: 5px; }
+        .btn-add { border: none; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        
+        .secao-dados { background: white; border-radius: 10px; padding: 15px; margin-top: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: none; }
+        .secao-dados h2 { margin-top: 0; font-size: 18px; color: #333; }
+        .campo { margin-bottom: 12px; }
+        .campo label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+        .campo input, .campo select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        
+        .btn-carrinho { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 450px; background-color: #2ecc71; color: white; border: none; padding: 15px; border-radius: 30px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); display: none; text-align: center; }
+        
+        .status-badge { display: inline-block; padding: 8px 20px; border-radius: 20px; font-weight: bold; color: white; margin-top: 10px; font-size: 18px; }
+        .status-pendente { background-color: #f1c40f; }
+        .status-preparo { background-color: #3498db; }
+        .status-entrega { background-color: #e67e22; }
+        .status-concluido { background-color: #2ecc71; }
+
+        .rodape-propaganda { text-align: center; padding: 30px 10px; font-size: 12px; color: #a4b0be; }
+        .rodape-propaganda a { color: #747d8c; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <header id="app-header" style="background-color: #7f8c8d;">Buscando Estabelecimento...</header>
+
+    <div class="container">
+        <div id="tela-principal">
+            <div id="lista-produtos">Carregando cardápio...</div>
+
+            <div class="secao-dados" id="formulario-entrega">
+                <h2>📍 Dados para o Pedido</h2>
+                <div class="campo">
+                    <label>Seu Nome:</label>
+                    <input type="text" id="cliente-nome" placeholder="Ex: João Silva">
+                </div>
+                <div class="campo">
+                    <label>Tipo de Atendimento:</label>
+                    <select id="entrega-tipo" onchange="mudarTipoEntrega()">
+                        <option value="Entrega">Delivery (Entrega)</option>
+                        <option value="Retirada">Retirar no Balcão</option>
+                        <option value="Mesa">Estou na Mesa</option>
+                    </select>
+                </div>
+                <div class="campo" id="campo-endereco">
+                    <label>Endereço Completo / Número da Mesa:</label>
+                    <input type="text" id="cliente-endereco" placeholder="Rua e número OU Nº da Mesa">
+                </div>
+            </div>
+        </div>
+
+        <div class="secao-dados" id="tela-status" style="display: none; text-align: center; margin-top: 20px;">
+            <h2 style="color: #2ecc71;">🎉 Pedido Registrado!</h2>
+            <p>Acompanhe o progresso do seu pedido abaixo:</p>
+            <div style="background: #f1f2f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <div style="font-size: 14px; color: #7f8c8d;">Status Atual:</div>
+                <div id="status-atual-texto" class="status-badge status-pendente">Recebido</div>
+            </div>
+            <button onclick="voltarParaCardapio()" style="background: none; border: none; color: #7f8c8d; margin-top: 15px; cursor: pointer; text-decoration: underline;">Fazer outro pedido</button>
+        </div>
+    </div>
+
+    <button class="btn-carrinho" id="btn-carrinho" onclick="enviarPedidoFirebase()">
+        🛒 Confirmar e Enviar Pedido (<span id="qtd-carrinho">0</span>)
+    </button>
+
+    <footer class="rodape-propaganda">
+        OmniMenu © 2026 Powered by <a href="#" target="_blank">Akagai Pora</a>
+    </footer>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAC3ep1kk4zxKkVH1jXHqWV9r2use_HWfo",
+            authDomain: "omnimenu-d2875.firebaseapp.com",
+            projectId: "omnimenu-d2875",
+            storageBucket: "omnimenu-d2875.firebasestorage.app",
+            messagingSenderId: "628204265903",
+            appId: "1:628204265903:web:379db009ca38289bd6cf5a"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const idLojaAtual = urlParams.get('loja');
+
+        let configLoja = {}; 
+        let carrinho = {};
+        let listaProdutosLocal = []; 
+        let escutadorPedido = null; 
+
+        if (!idLojaAtual) {
+            document.getElementById("lista-produtos").innerHTML = "<h2>⚠️ Link inválido. Identificador da loja não encontrado na URL.</h2>";
+            throw new Error("ID da loja oculto.");
+        }
+
+        // BUSCA AS CONFIGURAÇÕES E VALIDA A LICENÇA DO LOJISTA
+        db.collection("empresas").doc(idLojaAtual).get().then((doc) => {
+            if (doc.exists) {
+                configLoja = doc.data();
+                
+                // BARREIRA DE BLOQUEIO DE MENSALIDADE
+                if (configLoja.status === "Bloqueado") {
+                    document.body.innerHTML = `
+                        <div style="text-align:center; padding:15px; font-family:'Segoe UI',sans-serif; margin-top:80px; color:#2f3542;">
+                            <div style="font-size:70px;">🏪</div>
+                            <h2 style="margin-bottom:10px;">Sistema Temporariamente Indisponível</h2>
+                            <p style="color:#7f8c8d; max-width:300px; margin:0 auto; font-size:15px; line-height:1.4;">
+                                O cardápio digital deste estabelecimento está aguardando renovação da licença.
+                            </p>
+                            <div style="margin-top:40px; font-size:11px; color:#a4b0be;">
+                                Tecnologia OmniMenu por Akagai Pora
+                            </div>
+                        </div>
+                    `;
+                    return; 
+                }
+                
+                document.getElementById('app-header').innerText = configLoja.nomeNegocio;
+                document.getElementById('app-header').style.backgroundColor = configLoja.corPrincipal;
+                
+                carregarCardapio();
+                verificarPedidoPendente();
+            } else {
+                document.getElementById("lista-produtos").innerHTML = "<h2>🏪 Estabelecimento não cadastrado no sistema.</h2>";
+            }
+        });
+
+        function verificarPedidoPendente() {
+            const pedidoSalvoId = localStorage.getItem(`omnimenu_pedido_id_${idLojaAtual}`);
+            if (pedidoSalvoId) {
+                document.getElementById('tela-principal').style.display = 'none';
+                document.getElementById('btn-carrinho').style.display = 'none';
+                document.getElementById('tela-status').style.display = 'block';
+                ligarMonitoramentoStatus(pedidoSalvoId);
+            }
+        }
+
+        function carregarCardapio() {
+            db.collection("empresas").doc(idLojaAtual).collection("produtos").onSnapshot((snapshot) => {
+                const listaDiv = document.getElementById("lista-produtos");
+                listaDiv.innerHTML = "";
+                listaProdutosLocal = [];
+
+                if(snapshot.empty) {
+                    listaDiv.innerHTML = "<p>Nenhum item disponível no momento.</p>";
+                    return;
+                }
+
+                snapshot.forEach((doc) => {
+                    const produto = doc.data();
+                    produto.id = doc.id; 
+                    listaProdutosLocal.push(produto);
+
+                    const imgHtml = produto.imagemUrl 
+                        ? `<img src="${produto.imagemUrl}" class="produto-img">` 
+                        : `<div class="produto-img" style="display: flex; align-items: center; justify-content: center; font-size: 20px; background: #e1e2e6;">🍔</div>`;
+
+                    listaDiv.innerHTML += `
+                        <div class="produto-card">
+                            <div style="display: flex; align-items: center; overflow: hidden;">
+                                ${imgHtml}
+                                <div class="produto-info">
+                                    <h3>${produto.nome}</h3>
+                                    <p>${produto.desc}</p>
+                                    <div class="produto-preco">R$ ${produto.preco.toFixed(2)}</div>
+                                </div>
+                            </div>
+                            <button class="btn-add" style="background-color: ${configLoja.corPrincipal};" onclick="adicionarAoCarrinho('${produto.id}')">+</button>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        function adicionarAoCarrinho(id) {
+            carrinho[id] = (carrinho[id] || 0) + 1;
+            atualizarInterface();
+        }
+
+        function atualizarInterface() {
+            const btn = document.getElementById('btn-carrinho');
+            const form = document.getElementById('formulario-entrega');
+            const qtdSpan = document.getElementById('qtd-carrinho');
+            
+            let totalItens = Object.values(carrinho).reduce((a, b) => a + b, 0);
+            qtdSpan.innerText = totalItens;
+            
+            if(totalItens > 0) { btn.style.display = 'block'; form.style.display = 'block'; }
+            else { btn.style.display = 'none'; form.style.display = 'none'; }
+        }
+
+        function mudarTipoEntrega() {
+            const tipo = document.getElementById('entrega-tipo').value;
+            const label = document.querySelector('#campo-endereco label');
+            const input = document.getElementById('cliente-endereco');
+
+            if(tipo === 'Mesa') {
+                label.innerText = "Número da Mesa:";
+                input.placeholder = "Ex: Mesa 04";
+            } else if (tipo === 'Retirada') {
+                document.getElementById('campo-endereco').style.display = 'none';
+                return;
+            } else {
+                label.innerText = "Endereço Completo:";
+                input.placeholder = "Rua, número, bairro";
+            }
+            document.getElementById('campo-endereco').style.display = 'block';
+        }
+
+        function enviarPedidoFirebase() {
+            const nome = document.getElementById('cliente-nome').value;
+            const tipo = document.getElementById('entrega-tipo').value;
+            const endereco = document.getElementById('cliente-endereco').value;
+
+            if(!nome) { alert("Digite seu nome!"); return; }
+            if(tipo !== 'Retirada' && !endereco) { alert("Preencha o local!"); return; }
+
+            let itensPedido = [];
+            let totalGeral = 0;
+
+            for (const id in carrinho) {
+                const produto = listaProdutosLocal.find(p => p.id === id);
+                const qtd = carrinho[id];
+                totalGeral += (produto.preco * qtd);
+                itensPedido.push({ nome: produto.nome, quantidade: qtd, precoUnitario: produto.preco });
+            }
+
+            const novoPedido = {
+                clienteNome: nome,
+                tipoAtendimento: tipo,
+                localizacao: tipo === 'Retirada' ? 'Balcão' : endereco,
+                itens: itensPedido,
+                total: totalGeral,
+                status: "Pendente", 
+                dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            db.collection("empresas").doc(idLojaAtual).collection("pedidos").add(novoPedido).then((docRef) => {
+                localStorage.setItem(`omnimenu_pedido_id_${idLojaAtual}`, docRef.id);
+
+                carrinho = {};
+                document.getElementById('cliente-nome').value = "";
+                document.getElementById('cliente-endereco').value = "";
+                
+                document.getElementById('tela-principal').style.display = 'none';
+                document.getElementById('btn-carrinho').style.display = 'none';
+                document.getElementById('tela-status').style.display = 'block';
+
+                ligarMonitoramentoStatus(docRef.id);
+            });
+        }
+
+        function ligarMonitoramentoStatus(pedidoId) {
+            escutadorPedido = db.collection("empresas").doc(idLojaAtual).collection("pedidos").doc(pedidoId).onSnapshot((doc) => {
+                if (doc.exists) {
+                    const pedido = doc.data();
+                    const badge = document.getElementById("status-atual-texto");
+                    badge.className = "status-badge"; 
+                    
+                    if (pedido.status === "Pendente") { badge.innerText = "⏳ Recebido"; badge.classList.add("status-pendente"); }
+                    else if (pedido.status === "Em preparo") { badge.innerText = "👨‍🍳 Na Cozinha"; badge.classList.add("status-preparo"); }
+                    else if (pedido.status === "Em entrega") { badge.innerText = "🛵 Em rota / Balcão"; badge.classList.add("status-entrega"); }
+                    else if (pedido.status === "Concluido") { badge.innerText = "✅ Finalizado"; badge.classList.add("status-concluido"); }
+                }
+            });
+        }
+
+        function voltarParaCardapio() {
+            localStorage.removeItem(`omnimenu_pedido_id_${idLojaAtual}`); 
+            if(escutadorPedido) escutadorPedido(); 
+            document.getElementById('tela-status').style.display = 'none';
+            document.getElementById('tela-principal').style.display = 'block';
+            atualizarInterface();
+        }
+    </script>
+</body>
+</html>
