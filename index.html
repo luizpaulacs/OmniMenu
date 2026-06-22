@@ -2,97 +2,121 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-    <title>OmniMenu Universal · Moderno</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5">
+    <title>OmniMenu · Cardápio</title>
+    <!-- Firebase SDK (Compat) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <!-- Font Awesome 6 (ícones) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #f8fafc;
-            color: #0b1a2e;
-            padding: 0 0 100px 0;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fc;
+            color: #1e293b;
             min-height: 100vh;
+            padding-bottom: 100px;
+        }
+
+        /* cabeçalho e fidelidade */
+        .barra-fidelidade {
+            background: #f1f4fa;
+            padding: 10px 16px;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            flex-wrap: wrap;
         }
-        .app-wrapper {
-            width: 100%;
-            max-width: 600px;
-            padding: 0 16px 16px;
-            margin: 0 auto;
+        .barra-fidelidade span {
+            font-size: 0.85rem;
+            color: #475569;
         }
-        /* Header com gradiente e sombra */
-        header {
-            width: 100%;
-            padding: 24px 20px;
-            text-align: center;
-            font-weight: 700;
-            font-size: 26px;
-            letter-spacing: -0.3px;
+        .btn-consultar-pts {
+            background: #1e293b;
             color: white;
-            background: #2c3e50;
-            background: linear-gradient(135deg, #1e293b 0%, #2c3e50 100%);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-            border-radius: 0 0 28px 28px;
-            margin-bottom: 24px;
-            transition: background 0.3s ease;
+            border: none;
+            padding: 6px 18px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-consultar-pts:hover { background: #0f172a; transform: scale(1.02); }
+
+        #app-header {
+            background: #1e293b;
+            color: white;
+            text-align: center;
+            padding: 24px 20px 16px;
+            font-size: 1.6rem;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
             position: relative;
-            z-index: 10;
         }
-        header span {
-            opacity: 0.9;
-            font-weight: 500;
-            font-size: 14px;
+        #app-header small {
             display: block;
-            margin-top: 6px;
-            letter-spacing: 0.2px;
-            color: rgba(255,255,255,0.7);
+            font-size: 0.8rem;
+            font-weight: 400;
+            opacity: 0.8;
+            margin-top: 4px;
         }
+        .regra-aviso {
+            background: #fefce8;
+            color: #854d0e;
+            text-align: center;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            border-bottom: 1px solid #fde68a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .regra-aviso i { color: #eab308; }
+
         .container {
-            width: 100%;
-            max-width: 600px;
+            max-width: 640px;
             margin: 0 auto;
+            padding: 16px 14px 80px;
         }
+
         /* categorias */
         .categoria-titulo {
-            font-size: 18px;
-            font-weight: 700;
-            color: #0b1a2e;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #0f172a;
             margin: 28px 0 14px 0;
-            padding-bottom: 8px;
-            border-bottom: 3px solid #e2e8f0;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #e9edf4;
             display: flex;
             align-items: center;
             gap: 8px;
             letter-spacing: -0.2px;
         }
-        .categoria-titulo::before {
-            content: "▹";
-            color: #2ecc71;
-            font-size: 20px;
-        }
-        /* cards */
+        .categoria-titulo i { color: #64748b; font-size: 1rem; }
+
+        /* cards de produtos */
         .produto-card {
             background: white;
             border-radius: 20px;
-            padding: 16px;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-            transition: all 0.15s ease;
-            border: 1px solid rgba(0,0,0,0.02);
-            display: flex;
-            flex-direction: column;
+            padding: 14px 16px;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.03);
+            border: 1px solid #f0f3f9;
+            transition: 0.15s;
         }
-        .produto-card:hover {
-            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-            transform: translateY(-2px);
-        }
+        .produto-card:hover { border-color: #dce2ec; background: #fafcff; }
+
         .produto-flex {
             display: flex;
             align-items: center;
@@ -100,51 +124,58 @@
             width: 100%;
         }
         .produto-img {
-            width: 72px;
-            height: 72px;
+            width: 68px;
+            height: 68px;
             border-radius: 16px;
             object-fit: cover;
-            background: #eef2f6;
+            background: #f1f5f9;
             flex-shrink: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
+            font-size: 1.6rem;
             color: #94a3b8;
-            border: 1px solid #e9edf2;
         }
         .produto-info {
             flex: 1;
         }
         .produto-info h3 {
-            font-size: 17px;
-            font-weight: 700;
-            margin: 0 0 4px 0;
-            color: #0b1a2e;
-            letter-spacing: -0.2px;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 2px;
+            color: #0f172a;
         }
         .produto-info p {
-            margin: 0;
+            font-size: 0.8rem;
             color: #64748b;
-            font-size: 13px;
             line-height: 1.4;
-            font-weight: 400;
+            margin: 0;
         }
         .produto-preco {
             font-weight: 700;
-            color: #0b1a2e;
-            font-size: 17px;
-            letter-spacing: -0.2px;
+            color: #0f172a;
+            font-size: 1rem;
         }
-        .preco-destaque {
-            background: #ecfdf5;
-            padding: 2px 10px;
-            border-radius: 30px;
-            color: #0b7e4a;
+        .btn-add {
+            background: #1e293b;
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 40px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
         }
+        .btn-add:hover { background: #0f172a; transform: scale(1.04); }
+
         /* variações */
         .variacoes-container {
-            margin-top: 14px;
+            margin-top: 12px;
             padding-top: 12px;
             border-top: 1px solid #edf2f7;
             display: flex;
@@ -155,235 +186,238 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: #f9fafb;
-            padding: 8px 14px;
+            background: #f8fafc;
+            padding: 8px 12px;
             border-radius: 40px;
-            font-size: 13px;
-            border: 1px solid #e9edf2;
-            transition: 0.1s ease;
+            border: 1px solid #e9edf4;
+            font-size: 0.85rem;
         }
-        .opcao-tamanho:hover {
-            background: #f1f5f9;
+        .opcao-tamanho strong { font-weight: 500; color: #1e293b; }
+        .opcao-tamanho .preco-var {
+            font-weight: 600;
+            color: #0f172a;
         }
         .btn-add-var {
-            border: none;
-            color: white;
-            padding: 5px 14px;
-            border-radius: 40px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 12px;
             background: #1e293b;
-            transition: 0.15s;
-            letter-spacing: 0.3px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-        }
-        .btn-add-var:active { transform: scale(0.94); }
-        .btn-add {
-            border: none;
             color: white;
-            padding: 8px 18px;
-            border-radius: 40px;
+            border: none;
+            padding: 4px 14px;
+            border-radius: 30px;
+            font-weight: 500;
+            font-size: 0.75rem;
             cursor: pointer;
-            font-weight: 600;
-            font-size: 18px;
-            background: #1e293b;
             transition: 0.15s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.04);
-            line-height: 1;
         }
-        .btn-add:active { transform: scale(0.90); }
-        /* formulário */
+        .btn-add-var:hover { background: #0f172a; }
+
+        /* formulário de entrega */
         .secao-dados {
             background: white;
             border-radius: 24px;
             padding: 20px 18px;
-            margin-top: 28px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.04);
-            border: 1px solid #edf2f7;
+            margin-top: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            border: 1px solid #f0f3f9;
             display: none;
         }
         .secao-dados h2 {
-            font-size: 18px;
-            margin-top: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
             margin-bottom: 16px;
-            font-weight: 700;
-            letter-spacing: -0.2px;
             display: flex;
             align-items: center;
             gap: 8px;
         }
+        .secao-dados h2 i { color: #3b82f6; }
         .campo {
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
         .campo label {
             display: block;
-            margin-bottom: 6px;
-            font-weight: 600;
-            font-size: 13px;
+            margin-bottom: 4px;
+            font-weight: 500;
+            font-size: 0.85rem;
             color: #334155;
         }
         .campo input, .campo select {
             width: 100%;
             padding: 12px 14px;
-            border: 1px solid #dce1e8;
-            border-radius: 16px;
-            font-size: 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 40px;
+            font-size: 0.9rem;
             background: #fafcff;
-            transition: 0.15s;
-            font-family: 'Inter', sans-serif;
+            transition: 0.2s;
+            font-family: inherit;
         }
         .campo input:focus, .campo select:focus {
-            border-color: #1e293b;
-            outline: none;
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+            border-color: transparent;
             background: white;
-            box-shadow: 0 0 0 3px rgba(30,41,59,0.08);
         }
-        /* botão carrinho flutuante */
+
+        /* botão carrinho fixo */
         .btn-carrinho {
             position: fixed;
-            bottom: 24px;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            width: calc(100% - 40px);
-            max-width: 540px;
-            background: #0b1a2e;
+            width: 92%;
+            max-width: 480px;
+            background: #1e293b;
             color: white;
             border: none;
-            padding: 18px 20px;
+            padding: 16px 20px;
             border-radius: 60px;
-            font-size: 18px;
-            font-weight: 700;
+            font-size: 1rem;
+            font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+            box-shadow: 0 8px 24px rgba(30, 41, 59, 0.25);
             display: none;
-            text-align: center;
-            letter-spacing: -0.2px;
-            transition: 0.15s;
-            z-index: 99;
-            backdrop-filter: blur(2px);
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: 0.2s;
+            z-index: 100;
         }
-        .btn-carrinho:active { transform: translateX(-50%) scale(0.96); }
-        /* status */
+        .btn-carrinho:hover { background: #0f172a; transform: translateX(-50%) scale(1.02); }
+        .btn-carrinho i { font-size: 1.1rem; }
+
+        /* tela de status */
+        #tela-status {
+            text-align: center;
+            padding: 30px 16px;
+            background: white;
+            border-radius: 32px;
+            border: 1px solid #f0f3f9;
+            margin-top: 12px;
+        }
+        #tela-status h2 {
+            font-size: 1.4rem;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
         .status-badge {
             display: inline-block;
-            padding: 12px 28px;
+            padding: 12px 32px;
             border-radius: 60px;
-            font-weight: 700;
+            font-weight: 600;
+            font-size: 1rem;
             color: white;
-            font-size: 18px;
-            background: #f1c40f;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            margin: 16px 0;
         }
-        .status-pendente { background: #f59e0b; }
+        .status-pendente { background: #facc15; color: #1e293b; }
         .status-preparo { background: #3b82f6; }
         .status-entrega { background: #f97316; }
         .status-concluido { background: #22c55e; }
-        #tela-status {
-            text-align: center;
-            padding: 36px 20px;
-        }
-        #tela-status h2 {
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-        .rodape-propaganda {
-            text-align: center;
-            padding: 40px 10px 20px;
-            font-size: 13px;
-            color: #94a3b8;
-            letter-spacing: 0.2px;
-            font-weight: 400;
-            width: 100%;
-            border-top: 1px solid #e9edf2;
-            margin-top: 30px;
-        }
-        /* responsividade extra */
-        @media (min-width: 640px) {
-            .produto-card { padding: 20px; }
-            .produto-img { width: 88px; height: 88px; }
-            .container { padding: 0 10px; }
-            header { font-size: 30px; padding: 28px 20px; border-radius: 0 0 32px 32px; }
-        }
-        @media (max-width: 480px) {
-            .produto-info h3 { font-size: 16px; }
-            .btn-add { font-size: 16px; padding: 6px 16px; }
-            .opcao-tamanho { font-size: 12px; padding: 6px 12px; }
-            .btn-carrinho { font-size: 16px; padding: 16px; bottom: 18px; }
-        }
-        /* loading */
-        .loading-placeholder {
-            color: #94a3b8;
-            text-align: center;
-            padding: 40px 0;
-            font-weight: 500;
-        }
-        .flex-between { display: flex; justify-content: space-between; align-items: center; }
-        .gap-2 { gap: 8px; }
-        .mt-1 { margin-top: 6px; }
-        .cor-secundaria { color: #475569; }
         .btn-voltar {
             background: transparent;
             border: none;
-            color: #475569;
-            font-weight: 600;
-            text-decoration: underline;
+            color: #64748b;
+            font-weight: 500;
             cursor: pointer;
-            font-size: 15px;
-            padding: 12px;
+            text-decoration: underline;
+            margin-top: 12px;
+            font-size: 0.9rem;
         }
-        .texto-pequeno { font-size: 13px; color: #64748b; }
+
+        .rodape {
+            text-align: center;
+            padding: 28px 10px 10px;
+            font-size: 0.7rem;
+            color: #94a3b8;
+            letter-spacing: 0.3px;
+        }
+
+        /* responsividade */
+        @media (max-width: 480px) {
+            #app-header { font-size: 1.3rem; padding: 18px 16px; }
+            .produto-img { width: 56px; height: 56px; }
+            .btn-add { width: 32px; height: 32px; font-size: 1rem; }
+        }
+        @media (min-width: 768px) {
+            .container { max-width: 700px; }
+        }
+        /* esconder scroll */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
     </style>
 </head>
 <body>
+
+    <!-- Barra fidelidade -->
+    <div class="barra-fidelidade">
+        <span><i class="fas fa-star" style="color:#f59e0b;"></i> Acumule pontos</span>
+        <button onclick="consultarPontosFidelidade()" class="btn-consultar-pts"><i class="fas fa-user-check"></i> Meus pontos</button>
+    </div>
+
+    <!-- Cabeçalho da loja -->
     <header id="app-header">
-        OmniMenu
-        <span>Cardápio digital · experiência fluida</span>
+        <span id="nome-loja">Carregando...</span>
+        <small><i class="fas fa-map-pin"></i> <span id="cidade-loja">—</span></small>
     </header>
 
-    <div class="app-wrapper">
-        <div id="tela-principal" class="container">
-            <div id="lista-produtos" class="loading-placeholder">Carregando catálogo...</div>
+    <!-- Aviso regra de fidelidade (inserido via JS) -->
+    <div id="regra-dinamica"></div>
 
+    <div class="container">
+        <!-- TELA PRINCIPAL -->
+        <div id="tela-principal">
+            <div id="lista-produtos">
+                <div style="text-align:center; padding:40px 0; color:#94a3b8;">
+                    <i class="fas fa-spinner fa-pulse" style="font-size:1.8rem;"></i>
+                    <p style="margin-top:12px;">Carregando cardápio...</p>
+                </div>
+            </div>
+
+            <!-- Formulário de dados -->
             <div class="secao-dados" id="formulario-entrega">
-                <h2>📍 Finalizar Pedido</h2>
+                <h2><i class="fas fa-clipboard-list"></i> Seu pedido</h2>
                 <div class="campo">
-                    <label>Seu Nome</label>
-                    <input type="text" id="cliente-nome" placeholder="Digite seu nome completo" value="">
+                    <label><i class="fas fa-user"></i> Seu nome</label>
+                    <input type="text" id="cliente-nome" placeholder="Digite seu nome completo">
                 </div>
                 <div class="campo">
-                    <label>Como deseja receber</label>
+                    <label><i class="fab fa-whatsapp"></i> WhatsApp (para fidelidade)</label>
+                    <input type="text" id="cliente-whatsapp" placeholder="Ex: 11999999999 (só números)">
+                </div>
+                <div class="campo">
+                    <label><i class="fas fa-truck"></i> Como deseja receber</label>
                     <select id="entrega-tipo" onchange="mudarTipoEntrega()">
-                        <option value="Entrega">Delivery (entrega no endereço)</option>
+                        <option value="Entrega">Delivery (endereço)</option>
                         <option value="Retirada">Retirar no balcão</option>
                         <option value="Mesa">Estou na mesa / comando</option>
                     </select>
                 </div>
                 <div class="campo" id="campo-endereco">
-                    <label>Endereço / Mesa</label>
-                    <input type="text" id="cliente-endereco" placeholder="Rua, número ou identificação da mesa">
+                    <label><i class="fas fa-map-marker-alt"></i> Endereço / mesa</label>
+                    <input type="text" id="cliente-endereco" placeholder="Rua, número ou identificação">
                 </div>
             </div>
         </div>
 
-        <div class="secao-dados" id="tela-status" style="display: none; text-align: center; padding: 32px 18px;">
-            <h2 style="color:#22c55e;">🎉 Pedido enviado!</h2>
-            <div style="background: #f8fafc; padding: 24px 16px; border-radius: 28px; margin: 20px 0;">
-                <div id="status-atual-texto" class="status-badge status-pendente">Aguardando</div>
-                <p style="margin-top: 16px; color: #475569; font-size: 14px;">Acompanhe o status em tempo real</p>
+        <!-- TELA DE STATUS DO PEDIDO -->
+        <div id="tela-status" style="display: none;">
+            <h2><i class="fas fa-check-circle" style="color:#22c55e;"></i> Pedido enviado!</h2>
+            <p style="color:#64748b; font-size:0.9rem;">Acompanhe o status abaixo</p>
+            <div style="background:#f8fafc; border-radius:28px; padding:20px 12px; margin:16px 0;">
+                <div id="status-atual-texto" class="status-badge status-pendente">⏳ Aguardando</div>
             </div>
-            <button onclick="voltarParaCardapio()" class="btn-voltar">← Voltar ao início</button>
+            <button onclick="voltarParaCardapio()" class="btn-voltar"><i class="fas fa-arrow-left"></i> Voltar ao cardápio</button>
         </div>
     </div>
 
+    <!-- Botão flutuante do carrinho -->
     <button class="btn-carrinho" id="btn-carrinho" onclick="enviarPedidoFirebase()">
-        🛒 Confirmar pedido · <span id="qtd-carrinho">0</span> item
+        <i class="fas fa-shopping-bag"></i> Confirmar pedido
+        <span style="background:#ffffff20; padding:0 12px; border-radius:40px; font-weight:700;">(<span id="qtd-carrinho">0</span>)</span>
     </button>
 
-    <footer class="rodape-propaganda">OmniMenu © · Akagai Pora</footer>
+    <footer class="rodape">OmniMenu · Akagai Pora</footer>
 
     <script>
-        // ===== CONFIGURAÇÃO FIREBASE =====
+        // ===== FIREBASE =====
         const firebaseConfig = {
             apiKey: "AIzaSyAC3ep1kk4zxKkVH1jXHqWV9r2use_HWfo",
             authDomain: "omnimenu-d2875.firebaseapp.com",
@@ -395,7 +429,6 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // ===== PARÂMETROS =====
         const urlParams = new URLSearchParams(window.location.search);
         const idLojaAtual = urlParams.get('loja');
 
@@ -405,90 +438,113 @@
         let escutadorPedido = null;
 
         if (!idLojaAtual) {
-            document.getElementById("lista-produtos").innerHTML = "<h2 style='color:#b91c1c;'>⚠️ Link inválido. Contate o estabelecimento.</h2>";
-            throw new Error("ID da loja não fornecido.");
+            document.getElementById("lista-produtos").innerHTML = `<div style="padding:40px;text-align:center;"><i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i><h3>Link inválido</h3></div>`;
+            throw new Error("ID da loja não fornecido");
         }
 
-        // ===== CARREGAR LOJA =====
+        // Carrega dados da loja
         db.collection("empresas").doc(idLojaAtual).get().then((doc) => {
             if (doc.exists) {
                 configLoja = doc.data();
                 if (configLoja.status === "Bloqueado") {
-                    document.body.innerHTML = `<div style="text-align:center;padding:60px 20px;"><h2 style="color:#b91c1c;">Estabelecimento indisponível</h2><p style="color:#475569;">Tente novamente mais tarde.</p></div>`;
+                    document.body.innerHTML = `<div style="text-align:center;padding:60px 20px;"><i class="fas fa-ban" style="font-size:2.5rem;color:#ef4444;"></i><h2 style="margin-top:16px;">Estabelecimento indisponível</h2></div>`;
                     return;
                 }
-                const header = document.getElementById('app-header');
-                header.innerText = configLoja.nomeNegocio || "OmniMenu";
-                header.style.background = configLoja.corPrincipal 
-                    ? `linear-gradient(135deg, ${configLoja.corPrincipal} 0%, ${configLoja.corPrincipal}cc 100%)` 
-                    : 'linear-gradient(135deg, #1e293b 0%, #2c3e50 100%)';
+                document.getElementById('nome-loja').innerText = configLoja.nomeNegocio || "Loja";
+                document.getElementById('cidade-loja').innerText = configLoja.cidade || "Online";
+                document.getElementById('app-header').style.background = configLoja.corPrincipal || "#1e293b";
+
+                // Aviso regra
+                const regraValor = configLoja.valorPorPonto || 10;
+                const aviso = document.getElementById('regra-dinamica');
+                aviso.className = 'regra-aviso';
+                aviso.innerHTML = `<i class="fas fa-gift"></i> A cada R$ ${regraValor.toFixed(2)} em compras, você ganha 1 ponto de fidelidade!`;
+
                 carregarCardapio();
                 verificarPedidoPendente();
             } else {
-                document.getElementById("lista-produtos").innerHTML = "<h2 style='color:#b91c1c;'>Loja não encontrada.</h2>";
+                alert("Loja não encontrada.");
             }
-        }).catch(() => {
-            document.getElementById("lista-produtos").innerHTML = "<h2 style='color:#b91c1c;'>Erro ao conectar.</h2>";
         });
 
-        // ===== VERIFICAR PEDIDO PENDENTE =====
+        // ===== FUNÇÕES =====
+        function consultarPontosFidelidade() {
+            const whats = prompt("Digite seu WhatsApp (apenas números com DDD):");
+            if (!whats) return;
+            db.collection("empresas").doc(idLojaAtual).collection("clientes").doc(whats.trim()).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const c = doc.data();
+                        const pts = c.pontosFidelidade || 0;
+                        alert(`⭐ Olá, ${c.nome || 'cliente'}!\nVocê tem ${pts} pontos de fidelidade.`);
+                    } else {
+                        alert("📭 Você ainda não tem pontos registrados nessa loja.");
+                    }
+                });
+        }
+
         function verificarPedidoPendente() {
-            const pedidoSalvoId = localStorage.getItem(`omnimenu_pedido_id_${idLojaAtual}`);
-            if (pedidoSalvoId) {
+            const pedidoId = localStorage.getItem(`omnimenu_pedido_id_${idLojaAtual}`);
+            if (pedidoId) {
                 document.getElementById('tela-principal').style.display = 'none';
                 document.getElementById('btn-carrinho').style.display = 'none';
                 document.getElementById('tela-status').style.display = 'block';
-                ligarMonitoramentoStatus(pedidoSalvoId);
+                ligarMonitoramentoStatus(pedidoId);
             }
         }
 
-        // ===== CARREGAR CARDÁPIO (REALTIME) =====
         function carregarCardapio() {
-            const listaDiv = document.getElementById("lista-produtos");
-            listaDiv.innerHTML = '<div class="loading-placeholder">Carregando cardápio...</div>';
-
             db.collection("empresas").doc(idLojaAtual).collection("produtos").onSnapshot((snapshot) => {
+                const listaDiv = document.getElementById("lista-produtos");
                 listaDiv.innerHTML = "";
                 listaProdutosLocal = [];
-                let categoriasAgrupadas = {};
+                const categorias = {};
 
-                snapshot.forEach((doc) => {
-                    const produto = doc.data();
-                    produto.id = doc.id;
-                    listaProdutosLocal.push(produto);
-                    const categoria = produto.categoria || "Geral";
-                    if (!categoriasAgrupadas[categoria]) categoriasAgrupadas[categoria] = [];
-                    categoriasAgrupadas[categoria].push(produto);
+                snapshot.forEach(doc => {
+                    const p = doc.data();
+                    p.id = doc.id;
+                    listaProdutosLocal.push(p);
+                    const cat = p.categoria || "Geral";
+                    if (!categorias[cat]) categorias[cat] = [];
+                    categorias[cat].push(p);
                 });
 
-                for (const nomeCategoria in categoriasAgrupadas) {
-                    listaDiv.innerHTML += `<div class="categoria-titulo">${nomeCategoria}</div>`;
-                    categoriasAgrupadas[nomeCategoria].forEach(produto => {
-                        const imgHtml = produto.imagemUrl 
-                            ? `<img src="${produto.imagemUrl}" class="produto-img" alt="${produto.nome}">` 
-                            : `<div class="produto-img">📦</div>`;
+                if (Object.keys(categorias).length === 0) {
+                    listaDiv.innerHTML = `<div style="padding:30px 0;text-align:center;color:#94a3b8;"><i class="fas fa-utensils" style="font-size:2rem;"></i><p style="margin-top:10px;">Cardápio vazio no momento.</p></div>`;
+                    return;
+                }
 
-                        let blocoPrecoOuVariacao = "";
+                for (const nomeCat in categorias) {
+                    listaDiv.innerHTML += `<div class="categoria-titulo"><i class="fas fa-tag"></i> ${nomeCat}</div>`;
+                    categorias[nomeCat].forEach(prod => {
+                        const imgHtml = prod.imagemUrl ?
+                            `<img src="${prod.imagemUrl}" class="produto-img" alt="${prod.nome}">` :
+                            `<div class="produto-img"><i class="fas fa-utensil-spoon"></i></div>`;
 
-                        if (produto.temVariacoes && produto.variacoes && produto.variacoes.length > 0) {
-                            blocoPrecoOuVariacao = `<div class="variacoes-container">`;
-                            produto.variacoes.forEach(v => {
-                                blocoPrecoOuVariacao += `
+                        let blocoPreco = "";
+                        if (prod.temVariacoes && prod.variacoes && prod.variacoes.length) {
+                            blocoPreco = `<div class="variacoes-container">`;
+                            prod.variacoes.forEach(v => {
+                                blocoPreco += `
                                     <div class="opcao-tamanho">
                                         <span><strong>${v.nome}</strong></span>
-                                        <div style="display:flex;align-items:center;gap:8px;">
-                                            <span style="font-weight:700;color:#0b1a2e;">R$ ${v.preco.toFixed(2)}</span>
-                                            <button class="btn-add-var" style="background:${configLoja.corPrincipal || '#1e293b'};" onclick="adicionarComTamanho('${produto.id}','${v.nome}',${v.preco})">➕</button>
-                                        </div>
+                                        <span>
+                                            <span class="preco-var">R$ ${v.preco.toFixed(2)}</span>
+                                            <button class="btn-add-var" style="background:${configLoja.corPrincipal || '#1e293b'};" onclick="adicionarComTamanho('${prod.id}', '${v.nome}', ${v.preco})">
+                                                <i class="fas fa-plus"></i> Escolher
+                                            </button>
+                                        </span>
                                     </div>
                                 `;
                             });
-                            blocoPrecoOuVariacao += `</div>`;
+                            blocoPreco += `</div>`;
                         } else {
-                            blocoPrecoOuVariacao = `
-                                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
-                                    <span class="produto-preco"><span class="preco-destaque">R$ ${produto.preco.toFixed(2)}</span></span>
-                                    <button class="btn-add" style="background:${configLoja.corPrincipal || '#1e293b'};" onclick="adicionarPrecoFixo('${produto.id}')">+</button>
+                            blocoPreco = `
+                                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:10px;">
+                                    <span class="produto-preco">R$ ${(prod.preco || 0).toFixed(2)}</span>
+                                    <button class="btn-add" style="background:${configLoja.corPrincipal || '#1e293b'};" onclick="adicionarPrecoFixo('${prod.id}')">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
                                 </div>
                             `;
                         }
@@ -498,41 +554,38 @@
                                 <div class="produto-flex">
                                     ${imgHtml}
                                     <div class="produto-info">
-                                        <h3>${produto.nome}</h3>
-                                        <p>${produto.desc || ''}</p>
+                                        <h3>${prod.nome}</h3>
+                                        <p>${prod.desc || ''}</p>
                                     </div>
                                 </div>
-                                ${blocoPrecoOuVariacao}
+                                ${blocoPreco}
                             </div>
                         `;
                     });
                 }
-                if (listaDiv.innerHTML === "") listaDiv.innerHTML = '<p style="text-align:center;color:#94a3b8;padding:40px 0;">Nenhum produto cadastrado.</p>';
             });
         }
 
-        // ===== ADICIONAR =====
         function adicionarPrecoFixo(id) {
             const prod = listaProdutosLocal.find(p => p.id === id);
             if (!prod) return;
-            carrinho.push({ id: prod.id, nome: prod.nome, preco: prod.preco, tamanho: "" });
+            carrinho.push({ id, nome: prod.nome, preco: prod.preco, tamanho: "" });
             atualizarInterface();
         }
 
         function adicionarComTamanho(id, tamanho, preco) {
             const prod = listaProdutosLocal.find(p => p.id === id);
             if (!prod) return;
-            carrinho.push({ id: prod.id, nome: `${prod.nome} (${tamanho})`, preco: preco, tamanho: tamanho });
+            carrinho.push({ id, nome: `${prod.nome} (${tamanho})`, preco, tamanho });
             atualizarInterface();
         }
 
         function atualizarInterface() {
             const btn = document.getElementById('btn-carrinho');
             const form = document.getElementById('formulario-entrega');
-            const qtd = document.getElementById('qtd-carrinho');
-            qtd.innerText = carrinho.length;
+            document.getElementById('qtd-carrinho').innerText = carrinho.length;
             if (carrinho.length > 0) {
-                btn.style.display = 'block';
+                btn.style.display = 'flex';
                 form.style.display = 'block';
             } else {
                 btn.style.display = 'none';
@@ -545,78 +598,76 @@
             document.getElementById('campo-endereco').style.display = tipo === 'Retirada' ? 'none' : 'block';
         }
 
-        // ===== ENVIAR PEDIDO =====
         function enviarPedidoFirebase() {
             const nome = document.getElementById('cliente-nome').value.trim();
+            const whats = document.getElementById('cliente-whatsapp').value.trim();
             const tipo = document.getElementById('entrega-tipo').value;
             const endereco = document.getElementById('cliente-endereco').value.trim();
 
-            if (!nome) { alert("Digite seu nome!"); return; }
-            if (tipo !== 'Retirada' && !endereco) { alert("Preencha o endereço ou mesa!"); return; }
+            if (!nome || !whats) { alert("Preencha seu nome e WhatsApp."); return; }
+            if (tipo !== 'Retirada' && !endereco) { alert("Informe o endereço/mesa."); return; }
 
-            let totalGeral = 0;
-            let itensAgrupados = [];
+            let total = 0;
+            const itensAgrupados = [];
             carrinho.forEach(item => {
-                totalGeral += item.preco;
-                let existente = itensAgrupados.find(i => i.nome === item.nome);
+                total += item.preco;
+                const existente = itensAgrupados.find(i => i.nome === item.nome);
                 if (existente) existente.quantidade++;
                 else itensAgrupados.push({ nome: item.nome, quantidade: 1, precoUnitario: item.preco });
             });
 
-            const novoPedido = {
+            // Atualiza ou cria cliente
+            const refCliente = db.collection("empresas").doc(idLojaAtual).collection("clientes").doc(whats);
+            refCliente.set({ nome, whatsapp: whats, ultimaCompra: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+
+            const pedido = {
                 clienteNome: nome,
+                clienteWhatsapp: whats,
                 tipoAtendimento: tipo,
                 localizacao: tipo === 'Retirada' ? 'Balcão' : endereco,
                 itens: itensAgrupados,
-                total: totalGeral,
+                total: total,
                 status: "Pendente",
                 dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            db.collection("empresas").doc(idLojaAtual).collection("pedidos").add(novoPedido).then((docRef) => {
-                localStorage.setItem(`omnimenu_pedido_id_${idLojaAtual}`, docRef.id);
-                carrinho = [];
-                document.getElementById('tela-principal').style.display = 'none';
-                document.getElementById('btn-carrinho').style.display = 'none';
-                document.getElementById('tela-status').style.display = 'block';
-                ligarMonitoramentoStatus(docRef.id);
-                atualizarInterface();
-            }).catch(() => alert("Erro ao enviar pedido. Tente novamente."));
+            db.collection("empresas").doc(idLojaAtual).collection("pedidos").add(pedido)
+                .then(docRef => {
+                    localStorage.setItem(`omnimenu_pedido_id_${idLojaAtual}`, docRef.id);
+                    carrinho = [];
+                    document.getElementById('tela-principal').style.display = 'none';
+                    document.getElementById('btn-carrinho').style.display = 'none';
+                    document.getElementById('tela-status').style.display = 'block';
+                    ligarMonitoramentoStatus(docRef.id);
+                });
         }
 
-        // ===== MONITORAR STATUS =====
         function ligarMonitoramentoStatus(pedidoId) {
             if (escutadorPedido) escutadorPedido();
-            escutadorPedido = db.collection("empresas").doc(idLojaAtual).collection("pedidos").doc(pedidoId).onSnapshot((doc) => {
-                if (doc.exists) {
-                    const pedido = doc.data();
-                    const badge = document.getElementById("status-atual-texto");
-                    badge.className = "status-badge";
-                    const statusMap = {
-                        "Pendente": { text: "⏳ Recebido e aguardando", cls: "status-pendente" },
-                        "Em preparo": { text: "👨‍🍳 Em produção", cls: "status-preparo" },
-                        "Em entrega": { text: "🛵 Saiu / pronto para retirada", cls: "status-entrega" },
-                        "Concluido": { text: "✅ Concluído!", cls: "status-concluido" }
-                    };
-                    const statusInfo = statusMap[pedido.status] || statusMap["Pendente"];
-                    badge.innerText = statusInfo.text;
-                    badge.classList.add(statusInfo.cls);
-                }
-            });
+            escutadorPedido = db.collection("empresas").doc(idLojaAtual).collection("pedidos").doc(pedidoId)
+                .onSnapshot(doc => {
+                    if (doc.exists) {
+                        const p = doc.data();
+                        const badge = document.getElementById("status-atual-texto");
+                        badge.className = "status-badge";
+                        const st = p.status || "Pendente";
+                        if (st === "Pendente") { badge.innerText = "⏳ Recebido, aguardando"; badge.classList.add("status-pendente"); }
+                        else if (st === "Em preparo") { badge.innerText = "👨‍🍳 Em preparo"; badge.classList.add("status-preparo"); }
+                        else if (st === "Em entrega") { badge.innerText = "🛵 Saiu para entrega / pronto"; badge.classList.add("status-entrega"); }
+                        else if (st === "Concluido") { badge.innerText = "✅ Concluído!"; badge.classList.add("status-concluido"); }
+                    }
+                });
         }
 
         function voltarParaCardapio() {
             localStorage.removeItem(`omnimenu_pedido_id_${idLojaAtual}`);
-            if (escutadorPedido) { escutadorPedido(); escutadorPedido = null; }
+            if (escutadorPedido) escutadorPedido();
             document.getElementById('tela-status').style.display = 'none';
             document.getElementById('tela-principal').style.display = 'block';
             atualizarInterface();
-            carrinho = [];
-            document.getElementById('btn-carrinho').style.display = 'none';
-            document.getElementById('formulario-entrega').style.display = 'none';
         }
 
-        // Inicializa estado
+        // inicializa formulário
         mudarTipoEntrega();
     </script>
 </body>
