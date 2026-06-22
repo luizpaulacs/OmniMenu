@@ -1,559 +1,94 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
-    <title>OmniMenu · Akagai Pora</title>
-
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js">
-    </script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js">
-    </script>
-
-    <!-- Google Fonts (Inter) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700&display=swap" rel="stylesheet" />
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniMenu by Akagai Pora</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
     <style>
-        /* ===================================================
-                   RESET & BASE
-                   =================================================== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; background-color: #f5f6fa; }
+        header { color: white; text-align: center; padding: 20px; font-size: 24px; font-weight: bold; }
+        .container { max-width: 500px; margin: 0 auto; padding: 15px; padding-bottom: 120px; }
+        
+        /* Títulos de Categorias */
+        .categoria-titulo { font-size: 20px; font-weight: bold; color: #2f3542; margin: 25px 0 12px 0; border-bottom: 2px solid #ddd; padding-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .produto-card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
+        .produto-img { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; margin-right: 15px; background-color: #eee; flex-shrink: 0; }
+        .produto-info h3 { margin: 0 0 5px 0; font-size: 18px; }
+        .produto-info p { margin: 0; color: #7f8c8d; font-size: 14px; }
+        .produto-preco { font-weight: bold; color: #2ecc71; margin-top: 5px; }
+        .btn-add { border: none; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        
+        .secao-dados { background: white; border-radius: 10px; padding: 15px; margin-top: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: none; }
+        .secao-dados h2 { margin-top: 0; font-size: 18px; color: #333; }
+        .campo { margin-bottom: 12px; }
+        .campo label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+        .campo input, .campo select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        
+        .btn-carrinho { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 450px; background-color: #2ecc71; color: white; border: none; padding: 15px; border-radius: 30px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); display: none; text-align: center; }
+        
+        .status-badge { display: inline-block; padding: 8px 20px; border-radius: 20px; font-weight: bold; color: white; margin-top: 10px; font-size: 18px; }
+        .status-pendente { background-color: #f1c40f; }
+        .status-preparo { background-color: #3498db; }
+        .status-entrega { background-color: #e67e22; }
+        .status-concluido { background-color: #2ecc71; }
 
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #f6f9fc;
-            color: #1a202c;
-            line-height: 1.5;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* ===================================================
-                   HEADER
-                   =================================================== */
-        .app-header {
-            background: linear-gradient(145deg, #2d3748, #1a202c);
-            color: #fff;
-            padding: 28px 20px 20px;
-            text-align: center;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-            position: relative;
-            z-index: 2;
-        }
-
-        .app-header h1 {
-            font-weight: 700;
-            font-size: 1.8rem;
-            letter-spacing: -0.3px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .app-header h1 small {
-            font-weight: 400;
-            font-size: 0.9rem;
-            opacity: 0.7;
-            display: inline-block;
-        }
-
-        .app-header .subhead {
-            font-size: 0.85rem;
-            opacity: 0.7;
-            margin-top: 4px;
-            font-weight: 400;
-        }
-
-        /* ===================================================
-                   CONTAINER
-                   =================================================== */
-        .container {
-            max-width: 720px;
-            margin: 0 auto;
-            padding: 20px 16px 140px;
-            width: 100%;
-            flex: 1;
-        }
-
-        /* ===================================================
-                   PRODUTO CARD
-                   =================================================== */
-        .produto-card {
-            background: #ffffff;
-            border-radius: 18px;
-            padding: 16px 18px;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03), 0 2px 4px rgba(0, 0, 0, 0.02);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.2s ease;
-            border: 1px solid transparent;
-        }
-
-        .produto-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.06);
-            border-color: #e2e8f0;
-        }
-
-        .produto-card .info-wrap {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            overflow: hidden;
-            flex: 1;
-        }
-
-        .produto-img {
-            width: 72px;
-            height: 72px;
-            border-radius: 14px;
-            object-fit: cover;
-            background: #edf2f7;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            font-weight: 300;
-        }
-
-        .produto-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .produto-info h3 {
-            font-size: 1.05rem;
-            font-weight: 600;
-            margin-bottom: 2px;
-            letter-spacing: -0.2px;
-        }
-
-        .produto-info p {
-            font-size: 0.85rem;
-            color: #64748b;
-            margin: 0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .produto-preco {
-            font-weight: 700;
-            color: #0f172a;
-            font-size: 1rem;
-            margin-top: 4px;
-        }
-
-        .btn-add {
-            background: #0f172a;
-            color: #fff;
-            border: none;
-            width: 44px;
-            height: 44px;
-            border-radius: 40px;
-            font-size: 1.6rem;
-            font-weight: 300;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            box-shadow: 0 4px 8px rgba(15, 23, 42, 0.08);
-        }
-
-        .btn-add:hover {
-            background: #1e293b;
-            transform: scale(1.04);
-        }
-
-        .btn-add:active {
-            transform: scale(0.94);
-        }
-
-        /* ===================================================
-                   SEÇÃO DADOS (formulário)
-                   =================================================== */
-        .secao-dados {
-            background: #ffffff;
-            border-radius: 20px;
-            padding: 22px 20px;
-            margin-top: 28px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03), 0 2px 4px rgba(0, 0, 0, 0.02);
-            display: none;
-            border: 1px solid #f1f5f9;
-        }
-
-        .secao-dados h2 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-top: 0;
-            margin-bottom: 18px;
-            color: #0f172a;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .campo {
-            margin-bottom: 16px;
-        }
-
-        .campo label {
-            display: block;
-            font-weight: 600;
-            font-size: 0.85rem;
-            margin-bottom: 5px;
-            color: #334155;
-        }
-
-        .campo input,
-        .campo select {
-            width: 100%;
-            padding: 12px 14px;
-            border: 1.5px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 0.95rem;
-            font-family: inherit;
-            background: #fafcff;
-            transition: 0.2s;
-        }
-
-        .campo input:focus,
-        .campo select:focus {
-            outline: none;
-            border-color: #0f172a;
-            background: #ffffff;
-            box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.06);
-        }
-
-        /* ===================================================
-                   BOTÃO CARRINHO (flutuante)
-                   =================================================== */
-        .btn-carrinho {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: calc(100% - 32px);
-            max-width: 680px;
-            background: #0f172a;
-            color: #fff;
-            border: none;
-            padding: 16px 20px;
-            border-radius: 60px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 12px 40px rgba(15, 23, 42, 0.25);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            letter-spacing: -0.2px;
-            transition: 0.2s;
-            z-index: 10;
-        }
-
-        .btn-carrinho:hover {
-            background: #1e293b;
-            transform: translateX(-50%) scale(1.02);
-        }
-
-        .btn-carrinho:active {
-            transform: translateX(-50%) scale(0.96);
-        }
-
-        .btn-carrinho .badge-qtd {
-            background: rgba(255, 255, 255, 0.18);
-            padding: 2px 12px;
-            border-radius: 40px;
-            font-size: 0.9rem;
-        }
-
-        /* ===================================================
-                   TELA DE STATUS
-                   =================================================== */
-        #tela-status {
-            display: none;
-            text-align: center;
-            padding: 32px 20px;
-            background: #ffffff;
-            border-radius: 28px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-            margin-top: 16px;
-        }
-
-        #tela-status h2 {
-            color: #0f172a;
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 6px;
-        }
-
-        #tela-status p {
-            color: #64748b;
-            font-size: 0.95rem;
-            margin-bottom: 20px;
-        }
-
-        .status-box {
-            background: #f8fafc;
-            padding: 24px 12px;
-            border-radius: 18px;
-            margin: 16px 0 24px;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 10px 28px;
-            border-radius: 60px;
-            font-weight: 700;
-            font-size: 1.1rem;
-            color: #fff;
-            letter-spacing: 0.3px;
-        }
-
-        .status-pendente {
-            background: #f59e0b;
-        }
-        .status-preparo {
-            background: #3b82f6;
-        }
-        .status-entrega {
-            background: #f97316;
-        }
-        .status-concluido {
-            background: #22c55e;
-        }
-
-        .btn-voltar {
-            background: none;
-            border: none;
-            color: #94a3b8;
-            font-size: 0.9rem;
-            cursor: pointer;
-            text-decoration: underline;
-            padding: 8px 12px;
-            transition: 0.2s;
-        }
-
-        .btn-voltar:hover {
-            color: #0f172a;
-        }
-
-        /* ===================================================
-                   RODAPÉ
-                   =================================================== */
-        .rodape-propaganda {
-            text-align: center;
-            padding: 32px 16px 20px;
-            font-size: 0.75rem;
-            color: #94a3b8;
-            border-top: 1px solid #eef2f6;
-            margin-top: 20px;
-        }
-
-        .rodape-propaganda a {
-            color: #475569;
-            text-decoration: none;
-            font-weight: 600;
-            transition: 0.2s;
-        }
-
-        .rodape-propaganda a:hover {
-            color: #0f172a;
-        }
-
-        /* ===================================================
-                   RESPONSIVO — TABLET / DESKTOP
-                   =================================================== */
-        @media (min-width: 640px) {
-            .container {
-                padding: 28px 24px 160px;
-            }
-
-            .produto-card {
-                padding: 18px 24px;
-                border-radius: 24px;
-            }
-
-            .produto-img {
-                width: 88px;
-                height: 88px;
-                border-radius: 18px;
-            }
-
-            .produto-info h3 {
-                font-size: 1.15rem;
-            }
-
-            .btn-add {
-                width: 52px;
-                height: 52px;
-                font-size: 1.8rem;
-            }
-
-            .secao-dados {
-                padding: 28px 28px;
-                border-radius: 24px;
-            }
-
-            .btn-carrinho {
-                padding: 18px 28px;
-                font-size: 1.15rem;
-                max-width: 600px;
-            }
-
-            #tela-status {
-                padding: 40px 32px;
-                border-radius: 32px;
-            }
-
-            .status-badge {
-                font-size: 1.2rem;
-                padding: 12px 36px;
-            }
-        }
-
-        @media (min-width: 1024px) {
-            .container {
-                max-width: 820px;
-                padding: 36px 32px 180px;
-            }
-
-            .produto-card {
-                padding: 20px 28px;
-                transition: all 0.25s ease;
-            }
-
-            .produto-card:hover {
-                transform: translateY(-4px);
-                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
-            }
-
-            .btn-carrinho {
-                max-width: 500px;
-                padding: 18px 32px;
-            }
-        }
-
-        /* ===================================================
-                   UTILITÁRIOS
-                   =================================================== */
-        .hidden {
-            display: none !important;
-        }
-
-        .text-muted {
-            color: #94a3b8;
-            font-size: 0.9rem;
-        }
-
-        .mt-2 {
-            margin-top: 8px;
-        }
+        .rodape-propaganda { text-align: center; padding: 30px 10px; font-size: 12px; color: #a4b0be; }
+        .rodape-propaganda a { color: #747d8c; text-decoration: none; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <!-- ====================================================
-    HEADER
-    ==================================================== -->
-    <header class="app-header" id="app-header">
-        <h1>
-            <span id="header-nome">Buscando...</span>
-            <small>· OmniMenu</small>
-        </h1>
-        <div class="subhead" id="header-sub">Cardápio digital</div>
-    </header>
+    <header id="app-header" style="background-color: #7f8c8d;">Buscando Estabelecimento...</header>
 
-    <!-- ====================================================
-    CONTEÚDO PRINCIPAL
-    ==================================================== -->
-    <main class="container">
-
-        <!-- TELA PRINCIPAL (cardápio + formulário) -->
+    <div class="container">
         <div id="tela-principal">
+            <div id="lista-produtos">Carregando cardápio...</div>
 
-            <!-- Lista de produtos -->
-            <div id="lista-produtos" class="text-muted" style="text-align:center; padding:20px 0;">
-                Carregando cardápio...
-            </div>
-
-            <!-- Formulário de entrega -->
             <div class="secao-dados" id="formulario-entrega">
-                <h2>📍 Detalhes do pedido</h2>
-
+                <h2>📍 Dados para o Pedido</h2>
                 <div class="campo">
-                    <label for="cliente-nome">Seu nome</label>
-                    <input type="text" id="cliente-nome" placeholder="Ex: João Silva" />
+                    <label>Seu Nome:</label>
+                    <input type="text" id="cliente-nome" placeholder="Ex: João Silva">
                 </div>
-
                 <div class="campo">
-                    <label for="entrega-tipo">Tipo de atendimento</label>
+                    <label>Tipo de Atendimento:</label>
                     <select id="entrega-tipo" onchange="mudarTipoEntrega()">
-                        <option value="Entrega">Delivery (entrega)</option>
-                        <option value="Retirada">Retirar no balcão</option>
-                        <option value="Mesa">Estou na mesa</option>
+                        <option value="Entrega">Delivery (Entrega)</option>
+                        <option value="Retirada">Retirar no Balcão</option>
+                        <option value="Mesa">Estou na Mesa</option>
                     </select>
                 </div>
-
                 <div class="campo" id="campo-endereco">
-                    <label for="cliente-endereco">Endereço / Nº da mesa</label>
-                    <input type="text" id="cliente-endereco" placeholder="Rua, número, bairro" />
+                    <label>Endereço Completo / Número da Mesa:</label>
+                    <input type="text" id="cliente-endereco" placeholder="Rua e número OU Nº da Mesa">
                 </div>
             </div>
         </div>
 
-        <!-- TELA DE STATUS (pedido em andamento) -->
-        <div id="tela-status">
-            <h2>🎉 Pedido registrado!</h2>
-            <p>Acompanhe o progresso abaixo:</p>
-            <div class="status-box">
-                <div style="font-size:0.85rem; color:#94a3b8; margin-bottom:8px;">Status atual</div>
-                <div id="status-atual-texto" class="status-badge status-pendente">⏳ Recebido</div>
+        <div class="secao-dados" id="tela-status" style="display: none; text-align: center; margin-top: 20px;">
+            <h2 style="color: #2ecc71;">🎉 Pedido Registrado!</h2>
+            <p>Acompanhe o progresso do seu pedido abaixo:</p>
+            <div style="background: #f1f2f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <div style="font-size: 14px; color: #7f8c8d;">Status Atual:</div>
+                <div id="status-atual-texto" class="status-badge status-pendente">Recebido</div>
             </div>
-            <button class="btn-voltar" onclick="voltarParaCardapio()">← Fazer novo pedido</button>
+            <button onclick="voltarParaCardapio()" style="background: none; border: none; color: #7f8c8d; margin-top: 15px; cursor: pointer; text-decoration: underline;">Fazer outro pedido</button>
         </div>
+    </div>
 
-    </main>
-
-    <!-- ====================================================
-    BOTÃO FLUTUANTE DO CARRINHO
-    ==================================================== -->
     <button class="btn-carrinho" id="btn-carrinho" onclick="enviarPedidoFirebase()">
-        🛒 Confirmar pedido
-        <span class="badge-qtd" id="qtd-carrinho">0</span>
+        🛒 Confirmar e Enviar Pedido (<span id="qtd-carrinho">0</span>)
     </button>
 
-    <!-- ====================================================
-    RODAPÉ
-    ==================================================== -->
     <footer class="rodape-propaganda">
-        OmniMenu © 2026 · Desenvolvido por <a href="#" target="_blank">Akagai Pora</a>
+        OmniMenu © 2026 Powered by <a href="#" target="_blank">Akagai Pora</a>
     </footer>
 
-    <!-- ====================================================
-    JAVASCRIPT — FIREBASE + LÓGICA
-    ==================================================== -->
     <script>
-        // ------------------------------------------------------------
-        // CONFIGURAÇÃO FIREBASE
-        // ------------------------------------------------------------
         const firebaseConfig = {
             apiKey: "AIzaSyAC3ep1kk4zxKkVH1jXHqWV9r2use_HWfo",
             authDomain: "omnimenu-d2875.firebaseapp.com",
@@ -562,215 +97,165 @@
             messagingSenderId: "628204265903",
             appId: "1:628204265903:web:379db009ca38289bd6cf5a"
         };
+
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // ------------------------------------------------------------
-        // PARÂMETROS DA URL
-        // ------------------------------------------------------------
         const urlParams = new URLSearchParams(window.location.search);
         const idLojaAtual = urlParams.get('loja');
 
+        let configLoja = {}; 
+        let carrinho = {};
+        let listaProdutosLocal = []; 
+        let escutadorPedido = null; 
+
         if (!idLojaAtual) {
-            document.getElementById('lista-produtos').innerHTML =
-                '<h3 style="color:#ef4444;">⚠️ Link inválido — loja não identificada.</h3>';
-            throw new Error('ID da loja ausente na URL');
+            document.getElementById("lista-produtos").innerHTML = "<h2>⚠️ Link inválido. Identificador ausente na URL.</h2>";
+            throw new Error("ID oculto.");
         }
 
-        // ------------------------------------------------------------
-        // ESTADO GLOBAL
-        // ------------------------------------------------------------
-        let configLoja = {};
-        let carrinho = {};
-        let listaProdutosLocal = [];
-        let escutadorPedido = null;
-
-        // ------------------------------------------------------------
-        // REFERÊNCIAS DOM
-        // ------------------------------------------------------------
-        const headerNome = document.getElementById('header-nome');
-        const headerSub = document.getElementById('header-sub');
-        const listaDiv = document.getElementById('lista-produtos');
-        const formEntrega = document.getElementById('formulario-entrega');
-        const btnCarrinho = document.getElementById('btn-carrinho');
-        const qtdSpan = document.getElementById('qtd-carrinho');
-        const telaStatus = document.getElementById('tela-status');
-        const telaPrincipal = document.getElementById('tela-principal');
-
-        // ------------------------------------------------------------
-        // 1. BUSCAR LOJA E VALIDAR LICENÇA
-        // ------------------------------------------------------------
-        db.collection('empresas')
-            .doc(idLojaAtual)
-            .get()
-            .then((doc) => {
-                if (!doc.exists) {
-                    listaDiv.innerHTML = '<h3>🏪 Estabelecimento não encontrado.</h3>';
-                    return;
-                }
-
+        db.collection("empresas").doc(idLojaAtual).get().then((doc) => {
+            if (doc.exists) {
                 configLoja = doc.data();
-
-                // 🔒 BLOQUEIO POR MENSALIDADE
-                if (configLoja.status === 'Bloqueado') {
+                
+                if (configLoja.status === "Bloqueado") {
                     document.body.innerHTML = `
-                            <div style="text-align:center; padding:40px 20px; font-family:'Inter',sans-serif; margin-top:60px;">
-                                <div style="font-size:72px;">🏪</div>
-                                <h2 style="margin:16px 0 8px;">Sistema indisponível</h2>
-                                <p style="color:#64748b; max-width:340px; margin:0 auto; font-size:0.95rem;">
-                                    Este estabelecimento está com a licença pendente.
-                                </p>
-                                <div style="margin-top:48px; font-size:0.7rem; color:#94a3b8;">
-                                    OmniMenu · Akagai Pora
-                                </div>
-                            </div>
-                        `;
-                    return;
+                        <div style="text-align:center; padding:15px; font-family:'Segoe UI',sans-serif; margin-top:80px; color:#2f3542;">
+                            <div style="font-size:70px;">🏪</div>
+                            <h2>Sistema Temporariamente Indisponível</h2>
+                            <p style="color:#7f8c8d; max-width:300px; margin:0 auto; font-size:15px;">O estabelecimento está aguardando renovação da licença.</p>
+                        </div>
+                    `;
+                    return; 
                 }
-
-                // Aplica cores e nome
-                headerNome.textContent = configLoja.nomeNegocio || 'Estabelecimento';
-                headerSub.textContent = 'Cardápio digital · ' + (configLoja.cidade || '');
-                document.querySelector('.app-header').style.background =
-                    `linear-gradient(145deg, ${configLoja.corPrincipal || '#2d3748'}, #1a202c)`;
-
-                // Carrega cardápio e verifica pedido pendente
+                
+                document.getElementById('app-header').innerText = configLoja.nomeNegocio;
+                document.getElementById('app-header').style.backgroundColor = configLoja.corPrincipal;
+                
                 carregarCardapio();
                 verificarPedidoPendente();
-            })
-            .catch((err) => {
-                console.error('Erro ao carregar loja:', err);
-                listaDiv.innerHTML = '<h3 style="color:#ef4444;">Erro ao conectar ao servidor.</h3>';
-            });
+            } else {
+                document.getElementById("lista-produtos").innerHTML = "<h2>🏪 Estabelecimento não cadastrado.</h2>";
+            }
+        });
 
-        // ------------------------------------------------------------
-        // 2. VERIFICAR PEDIDO PENDENTE (localStorage)
-        // ------------------------------------------------------------
         function verificarPedidoPendente() {
             const pedidoSalvoId = localStorage.getItem(`omnimenu_pedido_id_${idLojaAtual}`);
             if (pedidoSalvoId) {
-                telaPrincipal.style.display = 'none';
-                btnCarrinho.style.display = 'none';
-                telaStatus.style.display = 'block';
+                document.getElementById('tela-principal').style.display = 'none';
+                document.getElementById('btn-carrinho').style.display = 'none';
+                document.getElementById('tela-status').style.display = 'block';
                 ligarMonitoramentoStatus(pedidoSalvoId);
             }
         }
 
-        // ------------------------------------------------------------
-        // 3. CARREGAR CARDÁPIO (REALTIME)
-        // ------------------------------------------------------------
+        // NOVO SCRIPT DE RENDERIZAÇÃO: AGRUPADO POR CATEGORIAS
         function carregarCardapio() {
-            db.collection('empresas')
-                .doc(idLojaAtual)
-                .collection('produtos')
-                .onSnapshot((snapshot) => {
-                    listaDiv.innerHTML = '';
-                    listaProdutosLocal = [];
+            db.collection("empresas").doc(idLojaAtual).collection("produtos").onSnapshot((snapshot) => {
+                const listaDiv = document.getElementById("lista-produtos");
+                listaDiv.innerHTML = "";
+                listaProdutosLocal = [];
 
-                    if (snapshot.empty) {
-                        listaDiv.innerHTML = '<p class="text-muted" style="padding:20px 0;">Nenhum item disponível.</p>';
-                        return;
+                if(snapshot.empty) {
+                    listaDiv.innerHTML = "<p>Nenhum item disponível no momento.</p>";
+                    return;
+                }
+
+                // Cria um objeto para separar temporariamente os itens por categoria
+                let categoriasAgrupadas = {};
+
+                snapshot.forEach((doc) => {
+                    const produto = doc.data();
+                    produto.id = doc.id; 
+                    listaProdutosLocal.push(produto);
+
+                    // Se o produto antigo não tiver categoria, define como "Geral"
+                    const categoria = produto.categoria || "Geral";
+                    
+                    if (!categoriasAgrupadas[categoria]) {
+                        categoriasAgrupadas[categoria] = [];
                     }
+                    categoriasAgrupadas[categoria].push(produto);
+                });
 
-                    snapshot.forEach((doc) => {
-                        const produto = doc.data();
-                        produto.id = doc.id;
-                        listaProdutosLocal.push(produto);
-
-                        const imgHtml = produto.imagemUrl ?
-                            `<img src="${produto.imagemUrl}" class="produto-img" alt="${produto.nome}" />` :
-                            `<div class="produto-img">🍔</div>`;
+                // Desenha as categorias organizadas estruturalmente na tela
+                for (const nomeCategoria in categoriasAgrupadas) {
+                    listaDiv.innerHTML += `<div class="categoria-titulo">${nomeCategoria}</div>`;
+                    
+                    categoriasAgrupadas[nomeCategoria].forEach(produto => {
+                        const imgHtml = produto.imagemUrl 
+                            ? `<img src="${produto.imagemUrl}" class="produto-img">` 
+                            : `<div class="produto-img" style="display: flex; align-items: center; justify-content: center; font-size: 20px; background: #e1e2e6;">🍔</div>`;
 
                         listaDiv.innerHTML += `
-                                <div class="produto-card">
-                                    <div class="info-wrap">
-                                        ${imgHtml}
-                                        <div class="produto-info">
-                                            <h3>${produto.nome}</h3>
-                                            <p>${produto.desc || ''}</p>
-                                            <div class="produto-preco">R$ ${produto.preco.toFixed(2)}</div>
-                                        </div>
+                            <div class="produto-card">
+                                <div style="display: flex; align-items: center; overflow: hidden;">
+                                    ${imgHtml}
+                                    <div class="produto-info">
+                                        <h3>${produto.nome}</h3>
+                                        <p>${produto.desc}</p>
+                                        <div class="produto-preco">R$ ${produto.preco.toFixed(2)}</div>
                                     </div>
-                                    <button class="btn-add" 
-                                            style="background:${configLoja.corPrincipal || '#0f172a'};"
-                                            onclick="adicionarAoCarrinho('${produto.id}')">
-                                        +
-                                    </button>
                                 </div>
-                            `;
+                                <button class="btn-add" style="background-color: ${configLoja.corPrincipal};" onclick="adicionarAoCarrinho('${produto.id}')">+</button>
+                            </div>
+                        `;
                     });
-                });
+                }
+            });
         }
 
-        // ------------------------------------------------------------
-        // 4. CARRINHO
-        // ------------------------------------------------------------
         function adicionarAoCarrinho(id) {
             carrinho[id] = (carrinho[id] || 0) + 1;
             atualizarInterface();
         }
 
         function atualizarInterface() {
-            const totalItens = Object.values(carrinho).reduce((a, b) => a + b, 0);
-            qtdSpan.textContent = totalItens;
-
-            if (totalItens > 0) {
-                btnCarrinho.style.display = 'flex';
-                formEntrega.style.display = 'block';
-            } else {
-                btnCarrinho.style.display = 'none';
-                formEntrega.style.display = 'none';
-            }
+            const btn = document.getElementById('btn-carrinho');
+            const form = document.getElementById('formulario-entrega');
+            const qtdSpan = document.getElementById('qtd-carrinho');
+            
+            let totalItens = Object.values(carrinho).reduce((a, b) => a + b, 0);
+            qtdSpan.innerText = totalItens;
+            
+            if(totalItens > 0) { btn.style.display = 'block'; form.style.display = 'block'; }
+            else { btn.style.display = 'none'; form.style.display = 'none'; }
         }
 
-        // ------------------------------------------------------------
-        // 5. TIPO DE ENTREGA (exibe/oculta campo)
-        // ------------------------------------------------------------
         function mudarTipoEntrega() {
             const tipo = document.getElementById('entrega-tipo').value;
             const label = document.querySelector('#campo-endereco label');
             const input = document.getElementById('cliente-endereco');
-            const campoEnd = document.getElementById('campo-endereco');
 
-            if (tipo === 'Retirada') {
-                campoEnd.style.display = 'none';
+            if(tipo === 'Mesa') {
+                label.innerText = "Número da Mesa:";
+                input.placeholder = "Ex: Mesa 04";
+            } else if (tipo === 'Retirada') {
+                document.getElementById('campo-endereco').style.display = 'none';
                 return;
-            }
-
-            campoEnd.style.display = 'block';
-            if (tipo === 'Mesa') {
-                label.textContent = 'Número da mesa';
-                input.placeholder = 'Ex: Mesa 04';
             } else {
-                label.textContent = 'Endereço completo';
-                input.placeholder = 'Rua, número, bairro';
+                label.innerText = "Endereço Completo:";
+                input.placeholder = "Rua, número, bairro";
             }
+            document.getElementById('campo-endereco').style.display = 'block';
         }
 
-        // ------------------------------------------------------------
-        // 6. ENVIAR PEDIDO
-        // ------------------------------------------------------------
         function enviarPedidoFirebase() {
-            const nome = document.getElementById('cliente-nome').value.trim();
+            const nome = document.getElementById('cliente-nome').value;
             const tipo = document.getElementById('entrega-tipo').value;
-            const endereco = document.getElementById('cliente-endereco').value.trim();
+            const endereco = document.getElementById('cliente-endereco').value;
 
-            if (!nome) { alert('Digite seu nome!'); return; }
-            if (tipo !== 'Retirada' && !endereco) { alert('Preencha o local!'); return; }
+            if(!nome) { alert("Digite seu nome!"); return; }
+            if(tipo !== 'Retirada' && !endereco) { alert("Preencha o local!"); return; }
 
-            const itensPedido = [];
+            let itensPedido = [];
             let totalGeral = 0;
 
             for (const id in carrinho) {
                 const produto = listaProdutosLocal.find(p => p.id === id);
-                if (!produto) continue;
                 const qtd = carrinho[id];
-                totalGeral += produto.preco * qtd;
-                itensPedido.push({
-                    nome: produto.nome,
-                    quantidade: qtd,
-                    precoUnitario: produto.preco
-                });
+                totalGeral += (produto.preco * qtd);
+                itensPedido.push({ nome: produto.nome, quantidade: qtd, precoUnitario: produto.preco });
             }
 
             const novoPedido = {
@@ -779,95 +264,46 @@
                 localizacao: tipo === 'Retirada' ? 'Balcão' : endereco,
                 itens: itensPedido,
                 total: totalGeral,
-                status: 'Pendente',
+                status: "Pendente", 
                 dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            db.collection('empresas')
-                .doc(idLojaAtual)
-                .collection('pedidos')
-                .add(novoPedido)
-                .then((docRef) => {
-                    localStorage.setItem(`omnimenu_pedido_id_${idLojaAtual}`, docRef.id);
+            db.collection("empresas").doc(idLojaAtual).collection("pedidos").add(novoPedido).then((docRef) => {
+                localStorage.setItem(`omnimenu_pedido_id_${idLojaAtual}`, docRef.id);
+                carrinho = {};
+                document.getElementById('cliente-nome').value = "";
+                document.getElementById('cliente-endereco').value = "";
+                
+                document.getElementById('tela-principal').style.display = 'none';
+                document.getElementById('btn-carrinho').style.display = 'none';
+                document.getElementById('tela-status').style.display = 'block';
 
-                    // Limpa carrinho e formulário
-                    carrinho = {};
-                    document.getElementById('cliente-nome').value = '';
-                    document.getElementById('cliente-endereco').value = '';
-
-                    telaPrincipal.style.display = 'none';
-                    btnCarrinho.style.display = 'none';
-                    telaStatus.style.display = 'block';
-
-                    ligarMonitoramentoStatus(docRef.id);
-                })
-                .catch((err) => {
-                    alert('Erro ao enviar pedido. Tente novamente.');
-                    console.error(err);
-                });
+                ligarMonitoramentoStatus(docRef.id);
+            });
         }
 
-        // ------------------------------------------------------------
-        // 7. MONITORAR STATUS (REALTIME)
-        // ------------------------------------------------------------
         function ligarMonitoramentoStatus(pedidoId) {
-            if (escutadorPedido) escutadorPedido();
-
-            escutadorPedido = db
-                .collection('empresas')
-                .doc(idLojaAtual)
-                .collection('pedidos')
-                .doc(pedidoId)
-                .onSnapshot((doc) => {
-                    if (!doc.exists) return;
+            escutadorPedido = db.collection("empresas").doc(idLojaAtual).collection("pedidos").doc(pedidoId).onSnapshot((doc) => {
+                if (doc.exists) {
                     const pedido = doc.data();
-                    const badge = document.getElementById('status-atual-texto');
-
-                    // Remove todas as classes de status
-                    badge.className = 'status-badge';
-
-                    switch (pedido.status) {
-                        case 'Pendente':
-                            badge.textContent = '⏳ Recebido';
-                            badge.classList.add('status-pendente');
-                            break;
-                        case 'Em preparo':
-                            badge.textContent = '👨‍🍳 Na cozinha';
-                            badge.classList.add('status-preparo');
-                            break;
-                        case 'Em entrega':
-                            badge.textContent = '🛵 Em rota / Balcão';
-                            badge.classList.add('status-entrega');
-                            break;
-                        case 'Concluido':
-                            badge.textContent = '✅ Finalizado';
-                            badge.classList.add('status-concluido');
-                            break;
-                        default:
-                            badge.textContent = '📦 ' + pedido.status;
-                            badge.classList.add('status-pendente');
-                    }
-                });
+                    const badge = document.getElementById("status-atual-texto");
+                    badge.className = "status-badge"; 
+                    
+                    if (pedido.status === "Pendente") { badge.innerText = "⏳ Recebido"; badge.classList.add("status-pendente"); }
+                    else if (pedido.status === "Em preparo") { badge.innerText = "👨‍🍳 Na Cozinha"; badge.classList.add("status-preparo"); }
+                    else if (pedido.status === "Em entrega") { badge.innerText = "🛵 Em rota / Balcão"; badge.classList.add("status-entrega"); }
+                    else if (pedido.status === "Concluido") { badge.innerText = "✅ Finalizado"; badge.classList.add("status-concluido"); }
+                }
+            });
         }
 
-        // ------------------------------------------------------------
-        // 8. VOLTAR AO CARDÁPIO
-        // ------------------------------------------------------------
         function voltarParaCardapio() {
-            localStorage.removeItem(`omnimenu_pedido_id_${idLojaAtual}`);
-            if (escutadorPedido) {
-                escutadorPedido();
-                escutadorPedido = null;
-            }
-            telaStatus.style.display = 'none';
-            telaPrincipal.style.display = 'block';
+            localStorage.removeItem(`omnimenu_pedido_id_${idLojaAtual}`); 
+            if(escutadorPedido) escutadorPedido(); 
+            document.getElementById('tela-status').style.display = 'none';
+            document.getElementById('tela-principal').style.display = 'block';
             atualizarInterface();
         }
-
-        // Inicializa o campo de endereço conforme o select
-        document.addEventListener('DOMContentLoaded', () => {
-            mudarTipoEntrega();
-        });
     </script>
 </body>
 </html>
