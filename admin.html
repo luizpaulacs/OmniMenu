@@ -2,141 +2,368 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Admin - OmniMenu</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>Painel Admin · OmniMenu Moderno</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background-color: #f1f2f6; color: #2f3542; }
-        h1, h2 { color: #1e272e; margin-top: 0; }
-        .main-container { max-width: 1000px; margin: 0 auto; }
-        
-        .abas-menu { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ced6e0; padding-bottom: 10px; flex-wrap: wrap; }
-        .aba-btn { background: #ced6e0; border: none; padding: 10px 20px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; color: #57606f; transition: 0.2s; }
-        .aba-btn.ativa { background: #e74c3c; color: white; }
-        
-        .aba-conteudo { display: none; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f1f5f9;
+            color: #0b1a2e;
+            padding: 20px 12px 40px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+        }
+        .admin-wrapper {
+            width: 100%;
+            max-width: 1000px;
+        }
+        /* cabeçalho */
+        .admin-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+            gap: 12px;
+        }
+        .admin-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: white;
+            padding: 10px 20px 10px 16px;
+            border-radius: 60px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            border: 1px solid #e9edf2;
+        }
+        .admin-header h1 span {
+            color: #1e293b;
+            font-weight: 600;
+            background: #f1f5f9;
+            padding: 2px 16px;
+            border-radius: 40px;
+            font-size: 18px;
+        }
+        .badge-loja {
+            background: #e9edf2;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 14px;
+            color: #1e293b;
+        }
+        /* abas */
+        .abas-menu {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 28px;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 60px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            border: 1px solid #e9edf2;
+        }
+        .aba-btn {
+            background: transparent;
+            border: none;
+            padding: 10px 22px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 40px;
+            cursor: pointer;
+            color: #64748b;
+            transition: 0.12s;
+            letter-spacing: -0.1px;
+            flex: 1 0 auto;
+            white-space: nowrap;
+        }
+        .aba-btn:hover { background: #f1f5f9; color: #0b1a2e; }
+        .aba-btn.ativa {
+            background: #0b1a2e;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+        }
+        /* conteúdo */
+        .aba-conteudo {
+            display: none;
+            background: white;
+            padding: 24px 20px;
+            border-radius: 28px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.03);
+            border: 1px solid #eef2f6;
+            animation: fadeUp 0.2s ease;
+        }
         .aba-conteudo.ativa { display: block; }
-        
-        .filtros-container { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-        .filtro-btn { background: white; border: 1px solid #ccc; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 14px; }
-        .filtro-btn.ativo { background: #2f3542; color: white; border-color: #2f3542; }
-
-        .campo { margin-bottom: 15px; }
-        .campo label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .campo input, .campo textarea, .campo select { width: 100%; padding: 10px; border: 1px solid #ced6e0; border-radius: 6px; box-sizing: border-box; }
-        .btn-salvar { background: #2ecc71; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; width: 100%; }
-        .btn-salvar:disabled { background: #a4b0be; cursor: not-allowed; }
-        
-        .pedido-card { border-left: 6px solid #f1c40f; padding: 15px; background: #f8f9fa; border-radius: 6px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .pedido-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 10px; }
-        .pedido-itens { font-size: 14px; color: #57606f; margin-bottom: 10px; border-top: 1px dashed #ddd; border-bottom: 1px dashed #ddd; padding: 8px 0; }
-        .select-status { padding: 6px; border-radius: 4px; border: 1px solid #ccc; background: white; font-weight: bold; }
-        
-        div[class*="status-Pendente"] { border-left-color: #f1c40f; }
-        div[class*="status-Em preparo"] { border-left-color: #3498db; }
-        div[class*="status-Em entrega"] { border-left-color: #e67e22; }
-        div[class*="status-Concluido"] { border-left-color: #2ecc71; opacity: 0.7; }
-
-        .resumo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px; }
-        .resumo-card { background: #f8f9fa; border: 1px solid #e1e2e6; border-radius: 8px; padding: 20px; text-align: center; }
-        .resumo-card h3 { margin: 0; font-size: 14px; color: #7f8c8d; text-transform: uppercase; }
-        .resumo-card p { margin: 10px 0 0 0; font-size: 28px; font-weight: bold; color: #2f3542; }
-
-        /* Estilos da lista de reajuste de preço */
-        .item-reajuste { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; }
-        .input-preco-edit { width: 90px; padding: 6px; text-align: center; border-radius: 4px; border: 1px solid #ccc; font-weight: bold; margin-right: 10px; }
-        .btn-update-preco { background: #3498db; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; }
+        @keyframes fadeUp { 0% { opacity:0.6; transform:translateY(6px); } 100% { opacity:1; transform:translateY(0); } }
+        .aba-conteudo h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            letter-spacing: -0.2px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        /* formulário */
+        .campo { margin-bottom: 18px; }
+        .campo label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            color: #1e293b;
+        }
+        .campo input, .campo textarea, .campo select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #dce1e8;
+            border-radius: 16px;
+            font-size: 15px;
+            background: #fafcff;
+            transition: 0.12s;
+            font-family: 'Inter', sans-serif;
+        }
+        .campo input:focus, .campo textarea:focus, .campo select:focus {
+            border-color: #0b1a2e;
+            outline: none;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(11,26,46,0.06);
+        }
+        .campo textarea { resize: vertical; min-height: 80px; }
+        .campo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 540px) { .campo-grid { grid-template-columns: 1fr; } }
+        .box-variacao-input {
+            background: #f8fafc;
+            padding: 16px 18px;
+            border-radius: 20px;
+            border: 1px dashed #cbd5e1;
+            margin-bottom: 18px;
+            display: none;
+        }
+        .box-variacao-input label { font-weight: 600; font-size: 13px; display: block; margin-bottom: 6px; }
+        .btn-salvar {
+            background: #0b1a2e;
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 60px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 16px;
+            width: 100%;
+            transition: 0.12s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            letter-spacing: -0.1px;
+        }
+        .btn-salvar:active { transform: scale(0.97); }
+        .btn-salvar:disabled { opacity: 0.6; cursor: default; transform: none; }
+        .checkbox-var {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 12px 0 8px;
+        }
+        .checkbox-var input { width: 20px; height: 20px; accent-color: #0b1a2e; }
+        .checkbox-var label { font-weight: 600; cursor: pointer; color: #0b1a2e; }
+        /* pedidos */
+        .pedido-card {
+            border-left: 6px solid #f59e0b;
+            padding: 18px 16px;
+            background: #fafcff;
+            border-radius: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            border: 1px solid #eef2f6;
+            transition: 0.1s;
+        }
+        .pedido-card:hover { background: white; }
+        .pedido-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            font-weight: 700;
+            align-items: center;
+            gap: 6px;
+        }
+        .pedido-itens {
+            font-size: 14px;
+            color: #475569;
+            margin: 10px 0;
+            border-top: 1px dashed #e2e8f0;
+            border-bottom: 1px dashed #e2e8f0;
+            padding: 10px 0;
+        }
+        .pedido-card select {
+            padding: 8px 16px;
+            border-radius: 40px;
+            border: 1px solid #dce1e8;
+            background: white;
+            font-weight: 600;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+        }
+        .status-Pendente { border-left-color: #f59e0b; }
+        .status-Em\ preparo { border-left-color: #3b82f6; }
+        .status-Em\ entrega { border-left-color: #f97316; }
+        .status-Concluido { border-left-color: #22c55e; opacity: 0.7; }
+        .status-Concluido .pedido-header { opacity: 0.7; }
+        .texto-entrega { font-size: 13px; color: #64748b; margin-top: 2px; }
+        /* gerenciador preços */
+        .item-reajuste {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: #fafcff;
+            border-radius: 20px;
+            border: 1px solid #eef2f6;
+            margin-bottom: 10px;
+            gap: 12px;
+        }
+        .item-reajuste strong { font-weight: 600; }
+        .input-preco-edit {
+            width: 90px;
+            padding: 8px 8px;
+            text-align: center;
+            border-radius: 40px;
+            border: 1px solid #dce1e8;
+            font-weight: 600;
+            font-size: 14px;
+            background: white;
+        }
+        .input-preco-edit:focus { border-color: #0b1a2e; outline: none; }
+        .btn-update-preco {
+            background: #e9edf2;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            color: #0b1a2e;
+            transition: 0.1s;
+        }
+        .btn-update-preco:active { background: #cbd5e1; }
+        .sub-var-box {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 12px;
+            width: 100%;
+            margin-top: 6px;
+            padding-left: 8px;
+        }
+        .sub-var-box span { font-size: 13px; font-weight: 500; color: #1e293b; }
+        .sub-var-box .input-preco-edit { width: 80px; }
+        .badge-var { background: #e9edf2; padding: 2px 10px; border-radius: 40px; font-size: 12px; color: #475569; }
+        .sem-pedidos { color: #94a3b8; text-align: center; padding: 40px 0; font-weight: 500; }
+        /* responsivo */
+        @media (max-width: 600px) {
+            .admin-header h1 { font-size: 18px; padding: 8px 16px; flex-wrap: wrap; }
+            .admin-header h1 span { font-size: 15px; }
+            .abas-menu { border-radius: 28px; padding: 6px 8px; gap: 4px; }
+            .aba-btn { padding: 8px 14px; font-size: 13px; flex: 1 0 auto; }
+            .aba-conteudo { padding: 18px 14px; }
+        }
+        @media (max-width: 400px) {
+            .aba-btn { font-size: 12px; padding: 6px 10px; }
+        }
+        .dica { color: #64748b; font-size: 13px; margin-top: 4px; }
+        .flex-center { display: flex; align-items: center; gap: 6px; }
+        .mt-2 { margin-top: 8px; }
     </style>
 </head>
 <body>
+    <div class="admin-wrapper">
+        <!-- cabeçalho -->
+        <div class="admin-header">
+            <h1>⚙️ Omni<span>Admin</span></h1>
+            <div class="badge-loja" id="txt-nome-loja">🏪 Carregando...</div>
+        </div>
 
-    <div class="main-container" id="conteudo-painel-admin">
-        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h1>⚙️ Painel OmniMenu — <span id="txt-nome-loja">Carregando...</span></h1>
-        </header>
-
+        <!-- abas -->
         <div class="abas-menu">
-            <button class="aba-btn ativa" onclick="mudarAba('aba-pedidos', this)">📥 Pedidos Recebidos</button>
-            <button class="aba-btn" onclick="mudarAba('aba-resumo', this)">📊 Resumo do Dia</button>
-            <button class="aba-btn" onclick="mudarAba('aba-cadastro', this)">➕ Cadastrar Produto</button>
-            <button class="aba-btn" onclick="mudarAba('aba-cardapio-edit', this)">📦 Gerenciar Cardápio</button>
+            <button class="aba-btn ativa" onclick="mudarAba('aba-pedidos', this)">📥 Pedidos</button>
+            <button class="aba-btn" onclick="mudarAba('aba-cadastro', this)">➕ Cadastrar</button>
+            <button class="aba-btn" onclick="mudarAba('aba-cardapio-edit', this)">📦 Preços</button>
         </div>
 
+        <!-- aba pedidos -->
         <div id="aba-pedidos" class="aba-conteudo ativa">
-            <h2>Pedidos em Tempo Real</h2>
-            <div class="filtros-container">
-                <button class="filtro-btn ativo" onclick="filtrarPedidos('Todos', this)">Todos</button>
-                <button class="filtro-btn" onclick="filtrarPedidos('Pendente', this)">⏳ Pendentes</button>
-                <button class="filtro-btn" onclick="filtrarPedidos('Em preparo', this)">👨‍🍳 Na Cozinha</button>
-                <button class="filtro-btn" onclick="filtrarPedidos('Em entrega', this)">🛵 Em rota / Balcão</button>
-                <button class="filtro-btn" onclick="filtrarPedidos('Concluido', this)">✅ Concluídos</button>
-            </div>
-            <div id="lista-pedidos-admin">Carregando painel de pedidos...</div>
+            <h2>📋 Fila de pedidos</h2>
+            <div id="lista-pedidos-admin" class="sem-pedidos">Carregando pedidos...</div>
         </div>
 
-        <div id="aba-resumo" class="aba-conteudo">
-            <h2>Estatísticas de Hoje</h2>
-            <div class="resumo-grid">
-                <div class="resumo-card" style="border-top: 4px solid #2ecc71;">
-                    <h3>💵 Faturamento Hoje</h3>
-                    <p id="resumo-faturamento">R$ 0,00</p>
-                </div>
-                <div class="resumo-card" style="border-top: 4px solid #3498db;">
-                    <h3>📦 Total Pedidos</h3>
-                    <p id="resumo-total-pedidos">0</p>
-                </div>
-                <div class="resumo-card" style="border-top: 4px solid #e67e22;">
-                    <h3>🛵 Delivery / Mesa</h3>
-                    <p id="resumo-canais">D: 0 | M: 0</p>
-                </div>
-            </div>
-        </div>
-
+        <!-- aba cadastro -->
         <div id="aba-cadastro" class="aba-conteudo">
-            <h2>Cadastrar Novo Item no Cardápio</h2>
+            <h2>➕ Novo item</h2>
             <form id="form-produto" onsubmit="cadastrarProduto(event)">
-                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
+                <div class="campo">
+                    <label>Nome do produto / serviço</label>
+                    <input type="text" id="prod-nome" placeholder="Ex: Pizza de Calabresa, Camiseta Polo" required>
+                </div>
+                <div class="campo-grid">
                     <div class="campo">
-                        <label>Nome do Produto:</label>
-                        <input type="text" id="prod-nome" placeholder="Ex: X-Salada Especial" required>
+                        <label>Categoria (livre)</label>
+                        <input type="text" id="prod-categoria" placeholder="Ex: Pizzas, Bebidas" required>
                     </div>
-                    <div class="campo">
-                        <label>Preço (R$):</label>
-                        <input type="number" id="prod-preco" step="0.01" placeholder="Ex: 24.90" required>
+                    <div class="campo" id="campo-preco-base">
+                        <label>Preço padrão (R$)</label>
+                        <input type="number" id="prod-preco" step="0.01" placeholder="39.90">
                     </div>
                 </div>
+
+                <div class="checkbox-var">
+                    <input type="checkbox" id="prod-tem-var" onchange="toggleVariacoes()">
+                    <label for="prod-tem-var">🔁 Este item tem variações (tamanhos/modelos com preços diferentes)</label>
+                </div>
+
+                <div class="box-variacao-input" id="box-variacoes">
+                    <label>Defina as variações (Tamanho:Preço, separado por vírgula)</label>
+                    <input type="text" id="prod-variacoes-string" placeholder="Ex: Pequena:25.00, Média:35.00, Grande:45.00">
+                    <div class="dica">Siga o padrão: Nome:Preço, Nome2:Preço2</div>
+                </div>
+
                 <div class="campo">
-                    <label>Categoria do Item:</label>
-                    <select id="prod-categoria" required>
-                        <option value="🍔 Lanches">🍔 Lanches</option>
-                        <option value="🥤 Bebidas">🥤 Bebidas</option>
-                        <option value="🍟 Porções">🍟 Porções</option>
-                        <option value="🍦 Sobremesas">🍦 Sobremesas</option>
-                    </select>
+                    <label>Descrição</label>
+                    <textarea id="prod-desc" rows="3" placeholder="Detalhes atrativos do produto..." required></textarea>
                 </div>
                 <div class="campo">
-                    <label>Descrição / Ingredientes:</label>
-                    <textarea id="prod-desc" rows="3" placeholder="Pão, blend 150g, muçarela, alface, tomate e maionese caseira..." required></textarea>
-                </div>
-                <div class="campo">
-                    <label>Imagem do Produto:</label>
+                    <label>Imagem do item</label>
                     <input type="file" id="prod-img" accept="image/*" required>
                 </div>
-                <button type="submit" id="btn-submit-admin" class="btn-salvar">🚀 Salvar Produto no Cardápio</button>
+                <button type="submit" id="btn-submit-admin" class="btn-salvar">🚀 Publicar no cardápio</button>
             </form>
         </div>
 
+        <!-- aba reajuste -->
         <div id="aba-cardapio-edit" class="aba-conteudo">
-            <h2>Gerenciar Preços e Cardápio</h2>
-            <p style="color:#7f8c8d; font-size: 14px; margin-bottom: 20px;">Edite o valor diretamente na caixa de texto e clique em Atualizar.</p>
-            <div id="lista-reajuste-itens">Carregando itens cadastrados...</div>
+            <h2>📦 Gerenciar preços</h2>
+            <p style="color:#64748b; font-size:14px; margin-bottom:24px;">Altere os valores e clique em "Atualizar" para sincronizar instantaneamente.</p>
+            <div id="lista-reajuste-itens">Carregando itens...</div>
         </div>
     </div>
 
     <script>
+        // ===== CONFIG FIREBASE =====
         const firebaseConfig = {
             apiKey: "AIzaSyAC3ep1kk4zxKkVH1jXHqWV9r2use_HWfo",
             authDomain: "omnimenu-d2875.firebaseapp.com",
@@ -145,7 +372,6 @@
             messagingSenderId: "628204265903",
             appId: "1:628204265903:web:379db009ca38289bd6cf5a"
         };
-
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const storage = firebase.storage();
@@ -153,201 +379,198 @@
         const urlParams = new URLSearchParams(window.location.search);
         const idLojaAtual = urlParams.get('loja');
 
-        let todosPedidosLocais = []; 
-        let filtroAtual = "Todos";
-
         if (!idLojaAtual) {
-            document.getElementById("conteudo-painel-admin").innerHTML = "<h2>⚠️ Link Admin incompleto.</h2>";
-            throw new Error("ID oculto.");
+            document.querySelector('.admin-wrapper').innerHTML = "<h2 style='color:#b91c1c;'>⚠️ Link inválido. Contate o administrador.</h2>";
+            throw new Error("ID da loja não fornecido.");
         }
 
+        // ===== CARREGAR NOME LOJA =====
         db.collection("empresas").doc(idLojaAtual).get().then((doc) => {
             if (doc.exists) {
-                const dadosLoja = doc.data();
-                if (dadosLoja.status === "Bloqueado") {
-                    document.getElementById("conteudo-painel-admin").innerHTML = `<div style="text-align:center; padding:40px; color:#ef4444;"><h2>🚫 Acesso Suspenso</h2></div>`;
-                    return;
-                }
-                document.getElementById("txt-nome-loja").innerText = dadosLoja.nomeNegocio;
-                inicializarEscutadores();
+                document.getElementById("txt-nome-loja").innerHTML = `🏪 ${doc.data().nomeNegocio || 'Loja'}`;
+                inicializarEscutadoresPedidos();
                 escutarProdutosParaReajuste();
             } else {
-                document.getElementById("conteudo-painel-admin").innerHTML = "<h2>🏪 Estabelecimento inexistente.</h2>";
+                document.getElementById("txt-nome-loja").innerHTML = "🏪 Loja não encontrada";
             }
         });
 
-        function inicializarEscutadores() {
-            db.collection("empresas").doc(idLojaAtual).collection("pedidos").orderBy("dataCriacao", "desc").onSnapshot((snapshot) => {
-                todosPedidosLocais = [];
-                snapshot.forEach(doc => {
-                    const p = doc.data();
-                    p.id = doc.id;
-                    todosPedidosLocais.push(p);
-                });
-                renderizarPedidos();
-                calcularResumoDoDia();
-            });
-        }
-
-        // NOVO SCRIPT: ESCUTA OS PRODUTOS PARA LISTAR NA ABA DE REAJUSTE DE PREÇO
-        function escutarProdutosParaReajuste() {
-            db.collection("empresas").doc(idLojaAtual).collection("produtos").orderBy("categoria").onSnapshot((snapshot) => {
-                const container = document.getElementById("lista-reajuste-itens");
-                container.innerHTML = "";
-
-                if(snapshot.empty) {
-                    container.innerHTML = "<p>Nenhum produto cadastrado no menu.</p>";
-                    return;
-                }
-
-                snapshot.forEach((doc) => {
-                    const produto = doc.data();
-                    const id = doc.id;
-                    const cat = produto.categoria || "Geral";
-
-                    container.innerHTML += `
-                        <div class="item-reajuste">
-                            <div>
-                                <span style="font-size:11px; background:#eee; padding:3px 6px; border-radius:3px; font-weight:bold; color:#57606f; margin-right:8px;">${cat}</span>
-                                <strong>${produto.nome}</strong>
-                            </div>
-                            <div style="display: flex; align-items: center;">
-                                <span style="font-weight:bold; margin-right:5px; font-size:14px;">R$</span>
-                                <input type="number" step="0.01" class="input-preco-edit" id="input-edit-${id}" value="${produto.preco.toFixed(2)}">
-                                <button class="btn-update-preco" onclick="salvarReajustePreco('${id}')">Atualizar Preço</button>
-                            </div>
-                        </div>
-                    `;
-                });
-            });
-        }
-
-        // FUNÇÃO QUE ALTERA O VALOR DIRETAMENTE NO FIRESTORE
-        function salvarReajustePreco(idProduto) {
-            const novoPreco = parseFloat(document.getElementById(`input-edit-${idProduto}`).value);
-            
-            if(isNaN(novoPreco) || novoPreco <= 0) {
-                alert("Digite um valor numérico válido!");
-                return;
-            }
-
-            db.collection("empresas").doc(idLojaAtual).collection("produtos").doc(idProduto).update({
-                preco: novoPreco
-            })
-            .then(() => {
-                console.log("Preço alterado no Firebase!");
-                alert("Preço reajustado com sucesso!");
-            })
-            .catch(err => alert("Erro ao atualizar: " + err.message));
-        }
-
+        // ===== ABAS =====
         function mudarAba(idAba, botao) {
-            document.querySelectorAll('.aba-conteudo').forEach(aba => aba.classList.remove('ativa'));
-            document.querySelectorAll('.aba-btn').forEach(btn => btn.classList.remove('ativa'));
+            document.querySelectorAll('.aba-conteudo').forEach(el => el.classList.remove('ativa'));
+            document.querySelectorAll('.aba-btn').forEach(el => el.classList.remove('ativa'));
             document.getElementById(idAba).classList.add('ativa');
             botao.classList.add('ativa');
         }
 
+        // ===== TOGGLE VARIAÇÕES =====
+        function toggleVariacoes() {
+            const check = document.getElementById("prod-tem-var").checked;
+            document.getElementById("box-variacoes").style.display = check ? "block" : "none";
+            document.getElementById("prod-preco").required = !check;
+            document.getElementById("campo-preco-base").style.opacity = check ? "0.5" : "1";
+        }
+
+        // ===== CADASTRAR PRODUTO =====
         function cadastrarProduto(event) {
             event.preventDefault();
             const btn = document.getElementById('btn-submit-admin');
             const arquivo = document.getElementById('prod-img').files[0];
-            const nome = document.getElementById('prod-nome').value;
-            const desc = document.getElementById('prod-desc').value;
-            const preco = parseFloat(document.getElementById('prod-preco').value);
-            const categoria = document.getElementById('prod-categoria').value; // Coleta a categoria selecionada
+            const nome = document.getElementById('prod-nome').value.trim();
+            const desc = document.getElementById('prod-desc').value.trim();
+            const categoria = document.getElementById('prod-categoria').value.trim();
+            const temVar = document.getElementById('prod-tem-var').checked;
+            const precoBase = parseFloat(document.getElementById('prod-preco').value) || 0;
 
-            btn.innerText = "⏳ Enviando imagem...";
+            let listaVariacoes = [];
+            if (temVar) {
+                const varString = document.getElementById('prod-variacoes-string').value;
+                try {
+                    varString.split(',').forEach(item => {
+                        let partes = item.split(':');
+                        if (partes.length === 2) {
+                            listaVariacoes.push({ nome: partes[0].trim(), preco: parseFloat(partes[1].trim()) });
+                        }
+                    });
+                    if (listaVariacoes.length === 0) { alert("Adicione pelo menos uma variação válida."); return; }
+                } catch(e) { alert("Formato inválido. Use: Nome:Preço, Nome2:Preço2"); return; }
+            }
+
+            btn.innerText = "⏳ Enviando...";
             btn.disabled = true;
 
-            const nomeArquivo = Date.now() + "_" + arquivo.name;
-            const refStorage = storage.ref().child('produtos/' + nomeArquivo);
-
+            const refStorage = storage.ref().child('produtos/' + Date.now() + "_" + arquivo.name);
             refStorage.put(arquivo)
-                .then((snapshot) => snapshot.ref.getDownloadURL())
-                .then((urlImagem) => {
+                .then(snap => snap.ref.getDownloadURL())
+                .then(urlImagem => {
                     return db.collection("empresas").doc(idLojaAtual).collection("produtos").add({
-                        nome: nome,
-                        desc: desc,
-                        preco: preco,
-                        categoria: categoria, // Salva o produto na categoria correta no banco
+                        nome,
+                        desc,
+                        preco: precoBase,
+                        categoria,
+                        temVariacoes: temVar,
+                        variacoes: listaVariacoes,
                         imagemUrl: urlImagem,
                         dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
                     });
                 })
                 .then(() => {
-                    alert("Produto cadastrado na categoria!");
+                    alert("✅ Produto publicado!");
                     document.getElementById('form-produto').reset();
+                    document.getElementById("box-variacoes").style.display = "none";
+                    document.getElementById("campo-preco-base").style.opacity = "1";
                 })
-                .catch((error) => alert("Erro: " + error.message))
+                .catch(err => alert("Erro: " + err.message))
                 .finally(() => {
-                    btn.innerText = "🚀 Salvar Produto no Cardápio";
+                    btn.innerText = "🚀 Publicar no cardápio";
                     btn.disabled = false;
                 });
         }
 
-        function filtrarPedidos(status, botao) {
-            filtroAtual = status;
-            document.querySelectorAll('.filtro-btn').forEach(btn => btn.classList.remove('ativo'));
-            botao.classList.add('ativo');
-            renderizarPedidos();
-        }
+        // ===== ESCUTAR PEDIDOS =====
+        function inicializarEscutadoresPedidos() {
+            db.collection("empresas").doc(idLojaAtual).collection("pedidos").orderBy("dataCriacao", "desc").onSnapshot((snap) => {
+                const container = document.getElementById("lista-pedidos-admin");
+                container.innerHTML = "";
+                if (snap.empty) { container.innerHTML = '<div class="sem-pedidos">📭 Nenhum pedido ainda.</div>'; return; }
 
-        function renderizarPedidos() {
-            const container = document.getElementById("lista-pedidos-admin");
-            container.innerHTML = "";
+                snap.forEach(doc => {
+                    const ped = doc.data();
+                    let itensHTML = "";
+                    ped.itens.forEach(i => { itensHTML += `<div>• ${i.quantidade}x ${i.nome}</div>`; });
 
-            const pedidosFiltrados = todosPedidosLocais.filter(p => {
-                if (filtroAtual === "Todos") return true;
-                return p.status === filtroAtual;
-            });
-
-            if (pedidosFiltrados.length === 0) {
-                container.innerHTML = `<p style="color:#7f8c8d;">Nenhum pedido encontrado.</p>`;
-                return;
-            }
-
-            pedidosFiltrados.forEach((pedido) => {
-                let itensHTML = "";
-                pedido.itens.forEach(item => { itensHTML += `<div>• ${item.quantidade}x ${item.nome}</div>`; });
-
-                container.innerHTML += `
-                    <div class="pedido-card status-${pedido.status}">
+                    const statusClass = ped.status || "Pendente";
+                    const card = document.createElement('div');
+                    card.className = `pedido-card status-${statusClass}`;
+                    card.innerHTML = `
                         <div class="pedido-header">
-                            <span>👤 ${pedido.clienteNome} (${pedido.tipoAtendimento})</span>
-                            <span style="color: #2ecc71">Total: R$ ${pedido.total.toFixed(2)}</span>
+                            <span><strong>👤 ${ped.clienteNome}</strong> · ${ped.tipoAtendimento}</span>
+                            <span style="color:#0b1a2e; font-weight:700;">R$ ${ped.total.toFixed(2)}</span>
                         </div>
-                        <div style="font-size: 13px; color: #7f8c8d; margin-bottom: 8px;">📍 Localização: ${pedido.localizacao}</div>
+                        <div class="texto-entrega">📍 ${ped.localizacao}</div>
                         <div class="pedido-itens">${itensHTML}</div>
-                        <div style="text-align: right;">
-                            <label style="font-size: 12px; font-weight:bold; margin-right: 5px;">Mudar Status:</label>
-                            <select class="select-status" onchange="actualizarStatusPedido('${pedido.id}', this.value)">
-                                <option value="Pendente" ${pedido.status === 'Pendente' ? 'selected' : ''}>⏳ Pendente</option>
-                                <option value="Em preparo" ${pedido.status === 'Em preparo' ? 'selected' : ''}>👨‍🍳 Em preparo</option>
-                                <option value="Em entrega" ${pedido.status === 'Em entrega' ? 'selected' : ''}>🛵 Em entrega</option>
-                                <option value="Concluido" ${pedido.status === 'Concluido' ? 'selected' : ''}>✅ Concluido</option>
-                            </select>
-                        </div>
-                    </div>
-                `;
+                        <select onchange="atualizarStatus('${doc.id}', this.value)">
+                            <option value="Pendente" ${statusClass === 'Pendente' ? 'selected' : ''}>⏳ Pendente</option>
+                            <option value="Em preparo" ${statusClass === 'Em preparo' ? 'selected' : ''}>👨‍🍳 Em preparo</option>
+                            <option value="Em entrega" ${statusClass === 'Em entrega' ? 'selected' : ''}>🛵 Em rota</option>
+                            <option value="Concluido" ${statusClass === 'Concluido' ? 'selected' : ''}>✅ Concluído</option>
+                        </select>
+                    `;
+                    container.appendChild(card);
+                });
             });
         }
 
-        function calcularResumoDoDia() {
-            let faturamento = 0, delivery = 0, mesa = 0;
-            todosPedidosLocais.forEach(p => {
-                faturamento += p.total;
-                if(p.tipoAtendimento === "Entrega") delivery++;
-                if(p.tipoAtendimento === "Mesa") mesa++;
-            });
-            document.getElementById("resumo-faturamento").innerText = `R$ ${faturamento.toFixed(2)}`;
-            document.getElementById("resumo-total-pedidos").innerText = todosPedidosLocais.length;
-            document.getElementById("resumo-canais").innerText = `🛵 ${delivery} | 🍽️ ${mesa}`;
+        function atualizarStatus(pedidoId, novoStatus) {
+            db.collection("empresas").doc(idLojaAtual).collection("pedidos").doc(pedidoId).update({ status: novoStatus });
         }
 
-        function actualizarStatusPedido(id, novoStatus) {
-            db.collection("empresas").doc(idLojaAtual).collection("pedidos").doc(id).update({ status: novoStatus });
+        // ===== REAJUSTE DE PREÇOS =====
+        function escutarProdutosParaReajuste() {
+            db.collection("empresas").doc(idLojaAtual).collection("produtos").orderBy("categoria").onSnapshot((snapshot) => {
+                const container = document.getElementById("lista-reajuste-itens");
+                container.innerHTML = "";
+                if (snapshot.empty) { container.innerHTML = '<div class="sem-pedidos">Nenhum produto cadastrado.</div>'; return; }
+
+                snapshot.forEach((doc) => {
+                    const prod = doc.data();
+                    const id = doc.id;
+                    const div = document.createElement('div');
+                    div.className = 'item-reajuste';
+
+                    if (prod.temVariacoes && prod.variacoes && prod.variacoes.length > 0) {
+                        let varHtml = `<div style="font-weight:600;">${prod.nome}</div><div style="display:flex;flex-wrap:wrap;gap:8px 16px;width:100%;margin-top:6px;">`;
+                        prod.variacoes.forEach((v, idx) => {
+                            varHtml += `
+                                <div style="display:flex;align-items:center;gap:6px;background:#f8fafc;padding:4px 12px 4px 8px;border-radius:40px;">
+                                    <span style="font-weight:500;font-size:13px;">${v.nome}</span>
+                                    <input type="number" step="0.01" class="input-preco-edit" id="input-edit-var-${id}-${idx}" value="${v.preco.toFixed(2)}" style="width:70px;">
+                                    <button class="btn-update-preco" onclick="salvarPrecoVariacao('${id}', ${idx})">Atualizar</button>
+                                </div>
+                            `;
+                        });
+                        varHtml += `</div>`;
+                        div.innerHTML = varHtml;
+                    } else {
+                        div.innerHTML = `
+                            <div><strong>${prod.nome}</strong> <span style="color:#64748b;font-size:13px;">${prod.categoria}</span></div>
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <span>R$</span>
+                                <input type="number" step="0.01" class="input-preco-edit" id="input-edit-fixo-${id}" value="${prod.preco.toFixed(2)}">
+                                <button class="btn-update-preco" onclick="salvarPrecoFixo('${id}')">Atualizar</button>
+                            </div>
+                        `;
+                    }
+                    container.appendChild(div);
+                });
+            });
         }
+
+        function salvarPrecoFixo(id) {
+            const preco = parseFloat(document.getElementById(`input-edit-fixo-${id}`).value);
+            if (isNaN(preco)) { alert("Valor inválido"); return; }
+            db.collection("empresas").doc(idLojaAtual).collection("produtos").doc(id).update({ preco })
+                .then(() => alert("✅ Preço atualizado!"))
+                .catch(() => alert("Erro ao atualizar."));
+        }
+
+        function salvarPrecoVariacao(id, index) {
+            const novoValor = parseFloat(document.getElementById(`input-edit-var-${id}-${index}`).value);
+            if (isNaN(novoValor)) { alert("Valor inválido"); return; }
+            db.collection("empresas").doc(idLojaAtual).collection("produtos").doc(id).get()
+                .then(doc => {
+                    let data = doc.data();
+                    data.variacoes[index].preco = novoValor;
+                    return db.collection("empresas").doc(idLojaAtual).collection("produtos").doc(id).update({ variacoes: data.variacoes });
+                })
+                .then(() => alert("✅ Variação atualizada!"))
+                .catch(() => alert("Erro ao atualizar."));
+        }
+
+        // Inicializa estado do checkbox
+        document.addEventListener('DOMContentLoaded', () => {
+            toggleVariacoes();
+        });
     </script>
 </body>
 </html>
